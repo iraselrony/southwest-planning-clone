@@ -1,0 +1,11 @@
+/* Minimal global reset — the original Webflow stylesheet handles all real styling.
+   This file exists so Next.js has a CSS module to import. The Webflow CSS is
+   loaded via <link> in app/layout.tsx so we don't bundle it into Next's CSS pipeline. */
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: #fff;
+	color: #000;
+}

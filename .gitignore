@@ -1,0 +1,56 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+.vscode
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# raw mirror (large binary content, regenerated)
+# Keep raw-mirror/ in repo for now so other agents can resume
+# /public/wp-content
+# /public/wp-includes
+
+# playwright artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# scripts runtime artifacts (regenerable)
+/execution-plan/screenshots/
+
+# Vercel CLI
+.vercel/
+
+# Runtime logs
+*.log
+/execution-plan/dev.log
+/execution-plan/start.log
+/execution-plan/npm-install.log
+/execution-plan/wget.log
+southwest-planning-clone/
