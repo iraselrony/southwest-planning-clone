@@ -28,6 +28,14 @@ npm run start
 
 Visit `http://localhost:3000/` — all 18 original URLs are routable.
 
+## Live deployment
+
+- **Production URL**: <https://southwest-planning-clone.vercel.app>
+- **GitHub**: <https://github.com/iraselrony/southwest-planning-clone>
+- **Vercel project**: `iraselrony-8320s-projects/southwest-planning-clone` (auto-deploys on push to `main`)
+
+Verified live: all 18 routes return 200, sitemap/robots present, form endpoint accepts POST, all static assets resolve.
+
 ## How to verify
 
 ```bash

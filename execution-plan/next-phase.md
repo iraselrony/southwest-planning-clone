@@ -102,11 +102,13 @@ The contact page's form should also be replaced with a proper React component th
 
 ### 7. GitHub + Vercel
 
-- Create a GitHub repo (name TBD with the client)
-- Push the current state as the initial commit
-- Connect the repo to Vercel
+- GitHub repo: <https://github.com/iraselrony/southwest-planning-clone> (public, frontend phase only)
+- Vercel project: `iraselrony-8320s-projects/southwest-planning-clone`, linked to the GitHub repo
+- Live URL: <https://southwest-planning-clone.vercel.app> (production alias)
 - Add environment variables: `DATABASE_URL` (Neon), `BLOB_READ_WRITE_TOKEN` (Vercel Blob), `PAYLOAD_SECRET`
 - Configure Vercel to use `npm run build` and serve on the default Next.js target
+
+There is also a pre-existing private repo `iraselrony/southwest-planning-consultancy` and a pre-existing Vercel project of the same name (with ~20 prior deployments). The Payload phase should reconcile: either reuse those, or delete them and rename `southwest-planning-clone` → `southwest-planning-consultancy` so the production domain cutover has a single source of truth.
 
 ### 8. Domain cutover
 
