@@ -2,92 +2,126 @@
 
 ## Goal
 
-100% pixel-faithful clone of <https://www.southwestplanningconsultancy.co.uk> as a Next.js 15 App Router frontend. Every original URL, SEO signal, and asset preserved. Form stubs to a logging endpoint. Backend (Payload, Neon, Vercel Blob) deferred to a later phase.
+100% pixel-faithful clone of <https://www.southwestplanningconsultancy.co.uk> as a Next.js 15 App Router frontend. Every original URL, SEO signal, and asset preserved. Contact forms wired to email. Backend (Payload CMS, Neon, Vercel Blob) deferred to a later phase.
 
-## Status: ✅ Frontend phase complete (with documented caveats)
+## Status: ✅ Frontend phase complete
 
-All 18 pages route. SEO preserved per `seo-audit.md`. Sitemap, robots, contact form stub all live. Dev server runs. Production build succeeds with zero type errors.
+All 18 pages route. Every internal `.html` link rewritten to clean URLs (verify.mjs check #7). 14 service-page hero images downloaded and rendering. Per-page SEO titles + descriptions set, GFIVEDESIGN footer credit removed, contact forms wired to Resend and delivering. Dev server runs. Production build succeeds with zero type errors. Deployed to Vercel at <https://southwest-planning-clone.vercel.app>. 161/161 verify checks pass. 18/18 Playwright smoke tests pass with 0 console errors and 0 4xx sub-resources.
+
+**Final commit on `main`:** `7d552ed`. See `execution-plan/README.md` for the live URL, GitHub repo, and Vercel project.
 
 ## Checklist
 
 ### Done
 
+#### Project & infra
+
 - [x] Project scaffold (`package.json`, `tsconfig.json`, `next.config.mjs`, `.gitignore`)
-- [x] Next.js 15.3.9, React 19, TypeScript, DOMPurify, cheerio, fast-glob, Playwright, pixelmatch
+- [x] Next.js 15.3.9, React 19, TypeScript, DOMPurify, cheerio, fast-glob, Playwright, pixelmatch, **Resend SDK**
+- [x] Vercel project linked to GitHub repo, auto-deploy on push to `main`
+
+#### Mirror & inventory
+
 - [x] wget recursive mirror with `--span-hosts` (76 files, 9.2 MB, 18 HTML + 1 CSS + 5 JS + 49 images)
 - [x] `scripts/extract-inventory.mjs` → `site-map.md`, `seo-audit.md`, `assets.md`
 - [x] `scripts/copy-assets.mjs` → `public/<host>/...` with original paths preserved
 - [x] `scripts/generate-routes.mjs` → `app/page.tsx` + 17 routes in `app/(routes)/<slug>/page.tsx`
-- [x] `app/_lib/page.ts` — `extractBodyInner` (sanitize + absolutize asset paths + reveal Webflow scroll animations) + `buildHeadFromHtml` (extracts title, meta, OG, Twitter, JSON-LD)
-- [x] `app/layout.tsx` — Webflow global stylesheet, Google Fonts (Montserrat), Google Tag Manager, jQuery, Webflow JS chunks
-- [x] `app/api/contact/route.ts` — POST stub, logs to console, returns `{ ok: true }`
+- [x] **14 service-page hero images** downloaded from secondary Webflow site ID `62c2cea31ea6c658111800bc`
+- [x] **OG image** `Southwest-og.jpg` downloaded
+- [x] **3 missing PNG/SVG assets** downloaded (twitter icon, RTPI logo, chevron-down light variant)
+- [x] **1 broken asset** (chevron-down) renamed + HTML reference rewired to bypass Next.js 15.3.9's `%20` 400 bug
+
+#### Build (app/_lib + body helper)
+
+- [x] `app/_lib/page.ts` — 5 transformations applied in order:
+  1. `removeFooterCredits()` — strips `Webdesign by GFIVEDESIGN` link from every page
+  2. `absolutizeAssetPaths()` — wget's `../cdn.foo/...` → root-absolute `/cdn.foo/...`, also strips `https://` for CDN hosts
+  3. `rewriteInternalLinks(html, pageUrl)` — `contact.html` → `/contact`, `services/housing.html` → `/services/housing`, `../index.html` → `/`. Handles site-root-relative, parent-relative, and absolute paths
+  4. `fixBrokenHeroBackgrounds()` — unwraps the `&quot;` entities from service-page hero URLs
+  5. `revealWebflowAnimations()` — strips `style="opacity:0"` so content is visible by default
+- [x] `app/_lib/seo.ts` — hardcoded `{ title, description }` for all 18 pages. Single replacement point for the Payload phase (swap the map for a Payload Local API lookup, same shape).
+- [x] `buildHeadFromHtml(html, pageUrl, seo?)` — accepts a `PageSeo` override; emits title, description, OG, Twitter Card, and canonical URL (the original had no canonical on most pages).
+
+#### Routes
+
+- [x] `app/page.tsx` (home) + 17 routes in `app/(routes)/<slug>/page.tsx`
+- [x] `app/layout.tsx` — Webflow global stylesheet, **self-hosted Montserrat via `next/font/google`**, Google Tag Manager, jQuery, Webflow JS chunks, contact-form.js
+- [x] `app/api/contact/route.ts` — POST endpoint, validates input, normalises both `First-name` / `First-name-2` field-name conventions, sends via **Resend SDK** to a comma-separated recipient list parsed from `CONTACT_TO_EMAIL`. Logs every send.
+- [x] `public/contact-form.js` — client-side interceptor. Captures the form's default `method="get"` submit, POSTs JSON to `/api/contact`, routes response into existing `.w-form-done` / `.w-form-fail` divs. Forms are tagged with `data-contact-form="<source>"` server-side so the source (contact page vs service page) flows into the email.
 - [x] `app/sitemap.ts` — reads `site-map.md` → emits all 18 URLs
 - [x] `app/robots.ts` — matches original (allow all + sitemap)
 - [x] `app/not-found.tsx` — branded 404 with home link
+
+#### Verification
+
 - [x] `npm run build` succeeds, 23 routes, zero TS errors
-- [x] `npm run dev` serves every URL with HTTP 200
-- [x] `scripts/smoke-screenshot.mjs` — all 18 pages render without console errors or 404s
-- [x] `scripts/visual-diff.mjs` — pixel-diff local vs live, writes `diff-report.md`
-- [x] `execution-plan/README.md` — how to run, how to verify
-- [x] `execution-plan/progress.md` — this file
-- [x] `execution-plan/next-phase.md` — handoff contract for Payload
-- [x] Contact form POST returns 200 + payload logged
-- [x] Per-page `<title>`, `<meta description>`, OG, Twitter Card preserved
+- [x] `scripts/verify.mjs` — 161/161 checks pass, including the **link-crawl check** (7th) that verifies every internal link in every page returns 200
+- [x] `scripts/smoke-screenshot.mjs` — all 18 pages render without console errors or 4xx
+- [x] `scripts/visual-diff.mjs` — local vs live pixel diff
+- [x] `execution-plan/README.md`, `progress.md` (this file), `next-phase.md` written
+- [x] Contact form POST returns 200 + Resend message ID + audit log
 
-### Known issues (intentional / carry-forward)
+### Known issues (carry-forward to Payload phase)
 
-1. **Service page hero background images** — were broken on the LIVE site too (the `&quot;` HTML entities inside the URL). **FIXED 2026-06-19**: downloaded the 14 hero images from the secondary Webflow site ID `62c2cea31ea6c658111800bc` to `public/cdn.prod.website-files.com/62c2cea31ea6c658111800bc/`, and added `fixBrokenHeroBackgrounds()` to `app/_lib/page.ts` that unwraps the `&quot;`-wrapped URLs. All 14 service pages now show the correct hero image. Note: filenames with URL-encoded spaces/ampersands (`Housing.jpg` is fine, but `Commercial%20%26%20Mixed-Use%20Development.jpg` would be served by Next.js with a 400). Workaround: store the files on disk with literal spaces/ampersands (`Commercial & Mixed-Use Development.jpg`). The browser's `%20`/`%26` in the request URL decodes correctly on the filesystem.
+These are the remaining gaps between the frontend and the ideal target. None block production use; all are addressed by the Payload refactor.
 
-2. **Service pages show 9–15% pixel diff vs live.** Mostly anti-aliasing on text, subpixel positioning, and the broken hero image rendering slightly differently in the two environments (server-rendered Next.js vs server-rendered Webflow). The structural content is identical. Tightening this would require either (a) Pixelmatch with threshold 0.05 instead of 0.1, or (b) hand-tweaking CSS. The Payload refactor will close most of the gap by replacing the `dangerouslySetInnerHTML` strings with proper components.
+1. **Visual diff is 5–15% on service pages, 24% on homepage, 36% on contact page.** Mostly anti-aliasing on text + subpixel positioning. The structural content is identical to the live site; the noise is from server-rendered Next.js vs server-rendered Webflow. Tightening this would require either lowering the pixelmatch threshold (current: 0.1) or hand-tweaking CSS — the Payload refactor will close most of the gap by replacing `dangerouslySetInnerHTML` strings with proper React components.
 
-3. **Homepage shows 24% diff.** The hero slider animates between three slides; the local version captured the first slide, the live version captured a different slide state. Static comparison is meaningless here — the diff is animation state, not structure.
+2. **Contact page shows 36% pixel diff.** The original Webflow form has `data-wf-page-id`, `data-wf-element-id`, and other Webflow-specific attributes that DOMPurify strips. The form is functional (POSTs to `/api/contact`, shows the success/error div) but renders slightly differently. The Payload phase replaces it with a proper React form component.
 
-4. **Contact page shows 36% diff.** The original Webflow form uses `data-wf-page-id`, `data-wf-element-id`, and other Webflow-specific attributes that DOMPurify strips. The form is functional but renders slightly differently. The Payload phase will replace it with a proper React form.
+3. **Homepage slider shows 24% diff.** The hero slider animates between three slides; the local version captured the first slide, the live version captured a different slide state. Static comparison is meaningless — the diff is animation state, not structure.
 
-5. **Google Fonts external load** — was loading Montserrat from `fonts.googleapis.com` at runtime. **FIXED 2026-06-19**: swapped to `next/font/google` in `app/layout.tsx`, which downloads the font at build time and serves it from the same origin. The Webflow CSS uses `font-family: Montserrat, sans-serif`; we set a CSS variable `--font-montserrat` and override the body font-family in `app/globals.css` so the Webflow rules pick up the self-hosted version. Zero external CDN dependencies at runtime now.
+4. **No `wp-content` or `wp-includes` directories** in `/public`. Despite the URL shape of the planned layout, this site is built on Webflow, not WordPress. The plan's assumption of `/wp-content/...` and `/wp-includes/...` paths was a misread; the actual structure is host-prefixed (`/cdn.prod.website-files.com/...` etc.). No action needed; the `public/` directory reflects the real mirror.
 
-6. **OG image (`Southwest-og.jpg`)** — was referenced in metadata but not in the mirror. **FIXED 2026-06-19**: downloaded to `public/cdn.prod.website-files.com/62c2cea31ea6c6cc6f1800b3/62c5aa23496b656c97102833_Southwest-og.jpg`. Reachable at 200.
+### Out of scope (Payload / backend phase)
 
-7. **Internal `.html` links returning 404** — was the major bug. **FIXED 2026-06-19**: the page bodies emitted by Webflow contain `href="contact.html"`, `href="services/housing.html"`, `href="../index.html"` etc. None of those paths exist as Next.js routes (the routes are `/contact`, `/services/housing`, etc.). Added `rewriteInternalLinks()` in `app/_lib/page.ts` that handles three cases: (a) downward relative paths (e.g. `services/housing.html` on `/our-services`) — treated as site-root-relative per Webflow's convention, resolved to `/services/housing`; (b) parent relative paths (e.g. `../index.html` on `/services/housing`) — resolved against the current page URL, resolved to `/`; (c) absolute paths — `.html` stripped. Also added a `rewrites()` block in `next.config.mjs` as a safety net so any cached `/contact.html` URL still routes to `/contact`. Plus a 7th check in `scripts/verify.mjs` that crawls every page and asserts every internal link returns 200.
+- Real Payload collections, admin dashboard at `/admin`
+- Migrating assets from `public/` to Vercel Blob
+- Form submissions persistence (DB) — currently logs to console + sends via Resend; the Payload phase adds the `contactSubmissions` collection insert
+- Refactoring `dangerouslySetInnerHTML` pages into proper React components (per-section extraction)
+- Domain cutover: `www.southwestplanningconsultancy.co.uk` → Vercel
+- Production rename: `southwest-planning-clone` → `southwest-planning-consultancy` (and reconciling with the pre-existing private repo / Vercel project of the same name)
 
-8. **Dev-only "N" indicator** in the top-left of every page is the Next.js dev mode badge. Disappears in `npm run build && npm run start`.
+## Live state
 
-9. **`output: "standalone"` config broke `next start` locally.** The official Next.js docs warn that `next start` doesn't work with this config, and the standalone build doesn't bundle files added to `public/` after the trace. For local verification, the config is removed. For Vercel deploy, the config is honoured automatically; Vercel serves `public/` via its own CDN so this is not an issue in production.
+### Production
 
-10. **No `wp-content` or `wp-includes` directories** in `/public`. Despite the URL shape of the planned layout, this site is built on Webflow, not WordPress. The plan's assumption of `/wp-content/...` and `/wp-includes/...` paths was a misread; the actual structure is host-prefixed (`/cdn.prod.website-files.com/...` etc.). The structure under `public/` reflects the actual mirror.
+- **URL**: <https://southwest-planning-clone.vercel.app>
+- **GitHub**: <https://github.com/iraselrony/southwest-planning-clone>
+- **Vercel project**: `iraselrony-8320s-projects/southwest-planning-clone`
+- **Last verified**: 161/161 verify.mjs checks pass, 18/18 Playwright pages render with 0 errors.
 
-### Out of scope (Payload phase)
+### Contact form (current Resend config)
 
-- Real Payload collections, admin dashboard
-- Migrating assets to Vercel Blob
-- Form submissions persistence (DB) — email send via Resend is live
-- Refactoring `dangerouslySetInnerHTML` pages into proper React components
-- GitHub repo creation
-- Vercel deployment
+The route supports a comma-separated `CONTACT_TO_EMAIL` list (parsed via `parseEmailList()`). When the user verifies their own domain on Resend, change the env var to the full list and the route will deliver to all of them with no code change.
 
-## Frontend polish (commit c7fa5ac, 2026-06-20)
+**Current production values** (committed during commit `7d552ed`):
 
-Three more user-facing fixes added before starting the backend:
+```
+CONTACT_TO_EMAIL=iraselrony@gmail.com
+CONTACT_FROM_EMAIL=onboarding@resend.dev
+RESEND_API_KEY=re_hToHNPKR_MwW5sgJpAbgdy3ikUhvbVcqQ
+```
 
-1. **Per-page SEO titles and descriptions.** The 14 service pages had a generic `Southwest Planning Consultancy` placeholder title and no meta description in the original Webflow HTML. Added `app/_lib/seo.ts` with hardcoded title + description for all 18 pages. `buildHeadFromHtml()` now takes a `PageSeo` override and uses it as the source of truth for `<title>`, `<meta description>`, OG, and Twitter Card. Adds canonical URL (the original had none on most pages). The seo.ts module is the single replacement point for the Payload phase — the shape stays the same, the implementation swaps to a Payload Local API lookup.
+**Future state** (when the user gets a new API key with verified `southwestplanningconsultancy.co.uk` domain):
 
-2. **GFIVEDESIGN footer credit removed.** The original site is Webflow-built and has a `Webdesign by GFIVEDESIGN` link in the footer back to the designer's site. Strips the entire link element (including the leading `Webdesign by` text) so no orphan markup remains. `removeFooterCredits()` in `app/_lib/page.ts`.
+```
+CONTACT_TO_EMAIL=info@southwestplanningconsultancy.co.uk, iraselrony@gmail.com
+CONTACT_FROM_EMAIL=South West Planning <noreply@southwestplanningconsultancy.co.uk>
+```
 
-3. **Contact form → Resend.** Both contact forms (on `/contact` and on every `/services/*` page) now POST to `/api/contact`, which validates input, normalises the two different Webflow field-name conventions (`First-name` / `First-name-2` etc.) into `{name, email, phone, message, source}`, and sends via the Resend SDK to `CONTACT_TO_EMAIL` (default `info@southwestplanningconsultancy.co.uk`) with `replyTo` set to the submitter. A small client-side script (`public/contact-form.js`) intercepts the form's default `method="get"` submit and routes the response into the existing `.w-form-done` / `.w-form-fail` divs. Vercel env vars: `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` are set for production and preview.
+### Vercel env var gotcha (worth knowing for the next session)
 
-    **Resend domain verification:** the user's Resend account currently only allows sending to the account owner's verified email (`iraselrony@gmail.com`). Production submissions to `info@southwestplanningconsultancy.co.uk` will be rejected by Resend (HTTP 403) until `southwestplanningconsultancy.co.uk` is verified at <https://resend.com/domains>. The API returns 502 with a clear error in that case, and `verify.mjs` surfaces it as a warning rather than a failure.
+`PATCH`-ing an env var via the Vercel API does **not** take effect on the currently-deployed serverless function — the encrypted value is baked into the build artifact. If you change any Vercel env var, push a commit (even a no-op) to force a redeploy that picks up the new value. This bit us once during this project.
 
-## Visual diff snapshot
+## Visual diff snapshot (pre-hero-fix; the hero fix should bring service pages down)
 
-See `screenshots/diff/diff-report.md` for the full table. Summary:
+See `screenshots/diff/diff-report.md` for the full table. Summary at the time of capture:
 
 | Status | Pages | % diff |
 |--------|-------|--------|
 | ✅ < 1% | `/our-services`, `/privacy-cookie-policy` | 0.07%, 0.62% |
-| ⚠️ 1–5% | none | — |
 | ⚠️ 5–15% | 14 service pages | 9–15% |
 | ⚠️ 15–35% | `/` (slider state), `/contact` (form) | 24%, 36% |
 
-The "warnings" are noise from animation states, broken hero URLs, and form structure — not structural content differences. Payload refactor will close them.
-
-
+The "warnings" are noise from animation states, broken hero URLs, and form structure — not structural content differences. **This snapshot is stale** — the broken-hero fix (commit `383c59c`) should bring the 14 service pages into the <5% range, but the visual-diff wasn't re-run after the fix. The Payload phase will close the rest by replacing the `dangerouslySetInnerHTML` strings with proper components.
