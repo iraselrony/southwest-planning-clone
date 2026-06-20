@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Montserrat } from "next/font/google";
+import { SITE } from "../config/site";
 import "./globals.css";
 
 // Self-hosted Montserrat. next/font/google downloads the font files at build
@@ -18,12 +19,11 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
 	title: {
-		default: "South West Planning Consultancy | Planning Consultants Southwest",
+		default: `${SITE.companyName} | Planning Consultants Southwest`,
 		template: "%s",
 	},
-	description:
-		"South West Planning is an independent practice based in the West Country and providing planning and design consultancy services throughout the area",
-	metadataBase: new URL("https://www.southwestplanningconsultancy.co.uk"),
+	description: SITE.companyTagline,
+	metadataBase: new URL(SITE.productionUrl),
 };
 
 export default function RootLayout({

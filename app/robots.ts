@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE } from "../config/site";
 
 export const dynamic = "force-static";
 
@@ -10,6 +11,6 @@ export default function robots(): MetadataRoute.Robots {
 				allow: "/",
 			},
 		],
-		sitemap: "https://www.southwestplanningconsultancy.co.uk/sitemap.xml",
+		sitemap: `${SITE.productionUrl}/sitemap.xml`,
 	};
 }

@@ -9,8 +9,8 @@
 // Required env vars (set in Vercel project settings):
 //   RESEND_API_KEY        Resend API key. Required.
 //   CONTACT_TO_EMAIL      Comma-separated destination address(es).
-//                         Default: info@southwestplanningconsultancy.co.uk
-//                         Example: "info@southwestplanningconsultancy.co.uk, partner@example.com"
+//                         Default: SITE.contactEmail (see config/site.ts)
+//                         Example: "info@example.com, partner@example.com"
 //   CONTACT_FROM_EMAIL    From address on the email. Must be on a Resend-verified
 //                         domain once you upgrade / verify. Default: onboarding@resend.dev
 //                         (the Resend-provided address, valid for the free tier
@@ -21,6 +21,7 @@
 
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { SITE } from "../../../config/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ function parseEmailList(
 }
 
 const TO_EMAILS = parseEmailList(process.env.CONTACT_TO_EMAIL, [
-	"info@southwestplanningconsultancy.co.uk",
+	SITE.contactEmail,
 ]);
 const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL ?? "onboarding@resend.dev";
 
@@ -231,7 +232,7 @@ export async function POST(request: Request) {
 		// Send to the configured recipient list. Resend accepts a single
 		// address or an array; the env var can be a single email or a
 		// comma-separated list. (When the firm upgrades to a verified
-		// domain, add `info@southwestplanningconsultancy.co.uk` to the list
+		// domain, add SITE.contactEmail to the list
 		// and the send will go to both addresses.)
 		const { data, error } = await resend.emails.send({
 			from: FROM_EMAIL,

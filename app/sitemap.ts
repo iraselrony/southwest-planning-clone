@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { SITE } from "../config/site";
 
 export const dynamic = "force-static";
 
-const BASE = "https://www.southwestplanningconsultancy.co.uk";
+const BASE = SITE.productionUrl;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	const mapPath = join(process.cwd(), "execution-plan", "site-map.md");

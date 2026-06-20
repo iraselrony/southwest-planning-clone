@@ -1,5 +1,7 @@
 import * as cheerio from "cheerio";
 import type { Metadata } from "next";
+import { SITE } from "../../config/site";
+import { KNOWN_PAGE_SLUGS } from "../../config/pages";
 
 const CDN_HOSTS = [
 	"cdn.prod.website-files.com",
@@ -123,26 +125,9 @@ function fixBrokenHeroBackgrounds(html: string): string {
  * External links (mailto:, tel:, https?://, etc.) are left untouched.
  */
 function rewriteInternalLinks(html: string, pageUrl: string): string {
-	const KNOWN_PAGES = new Set([
-		"/",
-		"/contact",
-		"/our-services",
-		"/privacy-cookie-policy",
-		"/services/architectural-services",
-		"/services/commercial-mixed-use-development",
-		"/services/drone-services",
-		"/services/employment-land",
-		"/services/equestrian-development",
-		"/services/housing",
-		"/services/leisure-development",
-		"/services/offices-industrial-planning",
-		"/services/renewables",
-		"/services/retail",
-		"/services/rural-planning-development",
-		"/services/school-hospital-development",
-		"/services/strategic-land",
-		"/services/waste-planning",
-	]);
+	// Built from config/pages.ts so adding a new service in
+	// config/services.ts automatically picks it up here.
+	const KNOWN_PAGES = new Set<string>(KNOWN_PAGE_SLUGS);
 
 	const $ = cheerio.load(html);
 	$("a[href]").each((_, el) => {
@@ -315,9 +300,9 @@ export function buildHeadFromHtml(
 	const description = seo?.description ?? htmlDescription;
 
 	// Canonical: prefer the HTML's value, otherwise construct one from pageUrl.
-	const PRODUCTION_BASE = "https://www.southwestplanningconsultancy.co.uk";
 	const canonical =
-		htmlCanonical ?? `${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`;
+		htmlCanonical ??
+		`${SITE.productionUrl}${pageUrl === "/" ? "/" : pageUrl}`;
 
 	const metadata: Metadata = {
 		...(title ? { title } : {}),
@@ -327,8 +312,8 @@ export function buildHeadFromHtml(
 		openGraph: {
 			title: seo?.title ?? og.title,
 			description: seo?.description ?? og.description,
-			url: `${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`,
-			siteName: og.site_name ?? "South West Planning Consultancy",
+			url: `${SITE.productionUrl}${pageUrl === "/" ? "/" : pageUrl}`,
+			siteName: og.site_name ?? SITE.companyName,
 			images: og.image ? [{ url: og.image }] : undefined,
 			type: (og.type as "website" | "article" | undefined) ?? "website",
 		},
