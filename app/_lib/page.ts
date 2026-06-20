@@ -301,8 +301,7 @@ export function buildHeadFromHtml(
 
 	// Canonical: prefer the HTML's value, otherwise construct one from pageUrl.
 	const canonical =
-		htmlCanonical ??
-		`${SITE.productionUrl}${pageUrl === "/" ? "/" : pageUrl}`;
+		htmlCanonical ?? `${SITE.productionUrl}${pageUrl === "/" ? "/" : pageUrl}`;
 
 	const metadata: Metadata = {
 		...(title ? { title } : {}),

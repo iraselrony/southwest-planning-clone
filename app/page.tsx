@@ -2,7 +2,12 @@
 // URL: /
 import { readFile } from "node:fs/promises";
 import DOMPurify from "isomorphic-dompurify";
-import { buildHeadFromHtml, extractBodyInner, getPageBody, injectBlocks } from "./_lib/page";
+import {
+	buildHeadFromHtml,
+	extractBodyInner,
+	getPageBody,
+	injectBlocks,
+} from "./_lib/page";
 import { getPageSeo } from "./_lib/seo";
 
 const SOURCE =

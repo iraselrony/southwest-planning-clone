@@ -50,11 +50,7 @@ export type CtaBlock = {
 	buttonUrl: string;
 };
 
-export type AnyBlock =
-	| HeroBlock
-	| RichTextBlock
-	| ServiceCardsBlock
-	| CtaBlock;
+export type AnyBlock = HeroBlock | RichTextBlock | ServiceCardsBlock | CtaBlock;
 
 // ---------- Renderers ----------
 

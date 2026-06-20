@@ -28,9 +28,7 @@ export function ServiceCardsBlockEditor({
 					id="sc-heading"
 					type="text"
 					value={block.heading}
-					onChange={(e) =>
-						onChange({ ...block, heading: e.target.value })
-					}
+					onChange={(e) => onChange({ ...block, heading: e.target.value })}
 					className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
 				/>
 			</div>
@@ -44,18 +42,15 @@ export function ServiceCardsBlockEditor({
 				<textarea
 					id="sc-intro"
 					value={block.intro}
-					onChange={(e) =>
-						onChange({ ...block, intro: e.target.value })
-					}
+					onChange={(e) => onChange({ ...block, intro: e.target.value })}
 					rows={4}
 					className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
 				/>
 			</div>
 			<p className="text-xs text-neutral-500">
-				The actual service card grid is generated from the
-				services table (in display order). The list of slugs
-				here is a future filter; for now leave it empty to show
-				all 14 services.
+				The actual service card grid is generated from the services table (in
+				display order). The list of slugs here is a future filter; for now leave
+				it empty to show all 14 services.
 			</p>
 		</div>
 	);

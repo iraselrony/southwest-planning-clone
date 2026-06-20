@@ -62,8 +62,7 @@ function extractBlockFromHtml($, zone, html) {
 	switch (zone.id) {
 		case "home-hero": {
 			const heading = el.find("h1.xxl-heading").text().trim() || "";
-			const subheading =
-				el.find(".body-display.light").text().trim() || "";
+			const subheading = el.find(".body-display.light").text().trim() || "";
 			return heading || subheading
 				? { type: "hero-block", heading, subheading }
 				: null;
@@ -82,8 +81,7 @@ function extractBlockFromHtml($, zone, html) {
 		}
 		case "contact-cta": {
 			const heading = el.find("h1.xxl-heading").text().trim() || "";
-			const subheading =
-				el.find(".body-display.light").text().trim() || "";
+			const subheading = el.find(".body-display.light").text().trim() || "";
 			return heading
 				? {
 						type: "cta-block",
@@ -146,11 +144,7 @@ async function main() {
 			continue;
 		}
 		const existingBody = existingRes.rows[0].body || {};
-		if (
-			!force &&
-			existingBody &&
-			Object.keys(existingBody).length > 0
-		) {
+		if (!force && existingBody && Object.keys(existingBody).length > 0) {
 			console.log(
 				`  → skip (body has ${Object.keys(existingBody).length} keys; use --force to overwrite)`,
 			);

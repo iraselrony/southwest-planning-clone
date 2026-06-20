@@ -33,8 +33,7 @@ export const ZONES: Record<string, Zone[]> = {
 		{
 			id: "home-hero",
 			// First slide of the homepage hero slider.
-			selector:
-				".hero-slider .main-slide:first-child .hero-intro",
+			selector: ".hero-slider .main-slide:first-child .hero-intro",
 			type: "hero-block",
 			description:
 				"The headline + subheadline on the first hero slide. (The slider has 3 slides in the original; this zone only covers slide 1.)",
@@ -50,8 +49,7 @@ export const ZONES: Record<string, Zone[]> = {
 		{
 			id: "contact-cta",
 			// The 'Ready to get your project moving?' CTA section.
-			selector:
-				".section.clip .action-content .stacked-title",
+			selector: ".section.clip .action-content .stacked-title",
 			type: "cta-block",
 			description:
 				"The contact CTA: heading + subheading + button text + button URL.",
@@ -61,7 +59,11 @@ export const ZONES: Record<string, Zone[]> = {
 
 /** All zone ids across all pages. Useful for the admin "pick a zone" UI. */
 export const ALL_ZONE_IDS: string[] = Array.from(
-	new Set(Object.values(ZONES).flat().map((z) => z.id)),
+	new Set(
+		Object.values(ZONES)
+			.flat()
+			.map((z) => z.id),
+	),
 );
 
 /** All known page URLs with editable zones. */

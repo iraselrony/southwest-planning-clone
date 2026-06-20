@@ -32,14 +32,10 @@ export function PageEditForm({
 	const router = useRouter();
 	const [title, setTitle] = useState(page.title);
 	const [metaTitle, setMetaTitle] = useState(page.metaTitle);
-	const [metaDescription, setMetaDescription] = useState(
-		page.metaDescription,
-	);
+	const [metaDescription, setMetaDescription] = useState(page.metaDescription);
 	const [ogImageUrl, setOgImageUrl] = useState<string | null>(page.ogImageUrl);
 	const [showInNav, setShowInNav] = useState(page.showInNav);
-	const [body, setBody] = useState<Record<string, unknown>>(
-		page.body ?? {},
-	);
+	const [body, setBody] = useState<Record<string, unknown>>(page.body ?? {});
 	const [showRawJson, setShowRawJson] = useState(false);
 	const [savedAt, setSavedAt] = useState<Date | null>(null);
 	const [isPending, startTransition] = useTransition();
@@ -62,9 +58,7 @@ export function PageEditForm({
 		);
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			alert(
-				`Save failed: ${err.error ?? res.statusText ?? "unknown error"}`,
-			);
+			alert(`Save failed: ${err.error ?? res.statusText ?? "unknown error"}`);
 			return;
 		}
 		setSavedAt(new Date());
@@ -97,8 +91,8 @@ export function PageEditForm({
 					SEO & meta
 				</h2>
 				<p className="mt-1 text-xs text-neutral-500">
-					Title, description, and Open Graph image. Used for
-					search results and social previews.
+					Title, description, and Open Graph image. Used for search results and
+					social previews.
 				</p>
 				<div className="mt-4 space-y-4">
 					<Field
@@ -129,10 +123,7 @@ export function PageEditForm({
 						>
 							OG image
 						</label>
-						<ImageUpload
-							value={ogImageUrl}
-							onChange={setOgImageUrl}
-						/>
+						<ImageUpload value={ogImageUrl} onChange={setOgImageUrl} />
 					</div>
 					<label className="flex items-center gap-2 text-sm text-neutral-700">
 						<input

@@ -41,9 +41,7 @@ export function ZoneEditor({
 					<h2 className="font-mono text-sm font-semibold tracking-tight text-neutral-900">
 						{zone.id}
 					</h2>
-					<p className="mt-0.5 text-xs text-neutral-500">
-						{zone.description}
-					</p>
+					<p className="mt-0.5 text-xs text-neutral-500">{zone.description}</p>
 				</div>
 				{block && (
 					<button
@@ -65,15 +63,9 @@ export function ZoneEditor({
 			</header>
 
 			{zone.type === "hero-block" ? (
-				<HeroBlockEditor
-					block={editorBlock as HeroBlock}
-					onChange={onChange}
-				/>
+				<HeroBlockEditor block={editorBlock as HeroBlock} onChange={onChange} />
 			) : zone.type === "cta-block" ? (
-				<CtaBlockEditor
-					block={editorBlock as CtaBlock}
-					onChange={onChange}
-				/>
+				<CtaBlockEditor block={editorBlock as CtaBlock} onChange={onChange} />
 			) : zone.type === "service-cards-block" ? (
 				<ServiceCardsBlockEditor
 					block={editorBlock as ServiceCardsBlock}
@@ -93,10 +85,7 @@ export function ZoneEditor({
 	);
 }
 
-function resolveBlock(
-	zone: Zone,
-	block: AnyBlock | undefined,
-): AnyBlock {
+function resolveBlock(zone: Zone, block: AnyBlock | undefined): AnyBlock {
 	if (block) return block;
 	switch (zone.type) {
 		case "hero-block":

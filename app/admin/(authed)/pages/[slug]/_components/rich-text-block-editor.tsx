@@ -29,8 +29,7 @@ export function RichTextBlockEditor({
 		content: initialContent,
 		editorProps: {
 			attributes: {
-				class:
-					"prose prose-sm max-w-none min-h-[160px] focus:outline-none",
+				class: "prose prose-sm max-w-none min-h-[160px] focus:outline-none",
 			},
 		},
 		onUpdate: ({ editor }) => {
@@ -77,11 +76,7 @@ export function RichTextBlockEditor({
 	);
 }
 
-function Toolbar({
-	editor,
-}: {
-	editor: ReturnType<typeof useEditor>;
-}) {
+function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
 	if (!editor) return null;
 	const btn = (active: boolean) =>
 		`rounded px-2 py-0.5 text-xs ${
@@ -108,18 +103,14 @@ function Toolbar({
 			<button
 				type="button"
 				className={btn(editor.isActive("heading", { level: 2 }))}
-				onClick={() =>
-					editor.chain().focus().toggleHeading({ level: 2 }).run()
-				}
+				onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
 			>
 				H2
 			</button>
 			<button
 				type="button"
 				className={btn(editor.isActive("heading", { level: 3 }))}
-				onClick={() =>
-					editor.chain().focus().toggleHeading({ level: 3 }).run()
-				}
+				onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
 			>
 				H3
 			</button>
