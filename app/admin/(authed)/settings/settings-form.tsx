@@ -32,14 +32,10 @@ export function SettingsForm({ initial }: { initial: SettingsForForm }) {
 	const router = useRouter();
 	const [logoUrl, setLogoUrl] = useState<string | null>(initial.logoUrl);
 	const [companyName, setCompanyName] = useState(initial.companyName);
-	const [companyTagline, setCompanyTagline] = useState(
-		initial.companyTagline,
-	);
+	const [companyTagline, setCompanyTagline] = useState(initial.companyTagline);
 	const [address, setAddress] = useState(initial.address);
 	const [phoneNumbers, setPhoneNumbers] = useState<string[]>(
-		initial.phoneNumbers.length > 0
-			? initial.phoneNumbers
-			: [""],
+		initial.phoneNumbers.length > 0 ? initial.phoneNumbers : [""],
 	);
 	const [email, setEmail] = useState(initial.email);
 	const [socialLinks, setSocialLinks] = useState<SocialLinks>(
@@ -86,9 +82,7 @@ export function SettingsForm({ initial }: { initial: SettingsForForm }) {
 		});
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			alert(
-				`Save failed: ${err.error ?? res.statusText ?? "unknown"}`,
-			);
+			alert(`Save failed: ${err.error ?? res.statusText ?? "unknown"}`);
 			return;
 		}
 		setSavedAt(new Date());
@@ -140,8 +134,8 @@ export function SettingsForm({ initial }: { initial: SettingsForForm }) {
 							className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
 						/>
 						<p className="mt-1 text-xs text-neutral-500">
-							Short blurb shown on the homepage and as the
-							default meta description.
+							Short blurb shown on the homepage and as the default meta
+							description.
 						</p>
 					</div>
 					<div>
@@ -201,10 +195,7 @@ export function SettingsForm({ initial }: { initial: SettingsForForm }) {
 						</label>
 						<div className="mt-1 space-y-2">
 							{phoneNumbers.map((phone, idx) => (
-								<div
-									key={idx}
-									className="flex items-center gap-2"
-								>
+								<div key={idx} className="flex items-center gap-2">
 									<input
 										type="tel"
 										value={phone}
@@ -219,11 +210,7 @@ export function SettingsForm({ initial }: { initial: SettingsForForm }) {
 									<button
 										type="button"
 										onClick={() =>
-											setPhoneNumbers(
-												phoneNumbers.filter(
-													(_, i) => i !== idx,
-												),
-											)
+											setPhoneNumbers(phoneNumbers.filter((_, i) => i !== idx))
 										}
 										className="rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-50"
 									>
@@ -234,9 +221,7 @@ export function SettingsForm({ initial }: { initial: SettingsForForm }) {
 						</div>
 						<button
 							type="button"
-							onClick={() =>
-								setPhoneNumbers([...phoneNumbers, ""])
-							}
+							onClick={() => setPhoneNumbers([...phoneNumbers, ""])}
 							className="mt-2 rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-700 hover:bg-neutral-50"
 						>
 							+ Add phone number
@@ -296,9 +281,7 @@ export function SettingsForm({ initial }: { initial: SettingsForForm }) {
 							id="registrationNumber"
 							type="text"
 							value={registrationNumber}
-							onChange={(e) =>
-								setRegistrationNumber(e.target.value)
-							}
+							onChange={(e) => setRegistrationNumber(e.target.value)}
 							className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
 						/>
 					</div>
@@ -312,9 +295,7 @@ export function SettingsForm({ initial }: { initial: SettingsForForm }) {
 						<textarea
 							id="registeredOffice"
 							value={registeredOffice}
-							onChange={(e) =>
-								setRegisteredOffice(e.target.value)
-							}
+							onChange={(e) => setRegisteredOffice(e.target.value)}
 							rows={3}
 							className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
 						/>

@@ -48,8 +48,8 @@ export default async function AdminSettingsPage() {
 					Site settings
 				</h1>
 				<p className="mt-1 text-sm text-neutral-600">
-					Company info, contact, social, registration. Shown in
-					the header, footer, and contact page.
+					Company info, contact, social, registration. Shown in the header,
+					footer, and contact page.
 				</p>
 			</div>
 			<SettingsForm

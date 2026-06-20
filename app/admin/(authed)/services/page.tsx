@@ -39,8 +39,7 @@ export default async function AdminServicesList() {
 						Services
 					</h1>
 					<p className="mt-1 text-sm text-neutral-600">
-						{rows.length} services. Add, edit, reorder, or
-						remove.
+						{rows.length} services. Add, edit, reorder, or remove.
 					</p>
 				</div>
 				<Link
@@ -78,9 +77,7 @@ export default async function AdminServicesList() {
 								<td className="px-2 py-2.5 text-center font-mono text-xs text-neutral-500">
 									{row.subtitle ?? row.displayOrder}
 								</td>
-								<td className="px-4 py-2.5 text-neutral-900">
-									{row.name}
-								</td>
+								<td className="px-4 py-2.5 text-neutral-900">{row.name}</td>
 								<td className="px-4 py-2.5 font-mono text-xs text-neutral-700">
 									{row.slug}
 								</td>

@@ -55,10 +55,7 @@ export async function PUT(request: Request) {
 	try {
 		body = await request.json();
 	} catch {
-		return NextResponse.json(
-			{ error: "Invalid JSON body" },
-			{ status: 400 },
-		);
+		return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
 	}
 	const parsed = PutBody.safeParse(body);
 	if (!parsed.success) {

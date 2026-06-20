@@ -63,8 +63,7 @@ export default async function EditServicePage({
 					cardImageUrl: row.cardImageUrl,
 					description: row.description,
 					longDescription:
-						(row.longDescription as Record<string, unknown>) ??
-						{},
+						(row.longDescription as Record<string, unknown>) ?? {},
 					contactFormEnabled: row.contactFormEnabled,
 					displayOrder: row.displayOrder,
 				}}

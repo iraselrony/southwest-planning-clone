@@ -22,6 +22,8 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { SITE } from "../../../config/site";
+import { db } from "../../../db";
+import { contactSubmissions } from "../../../db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -192,17 +194,46 @@ export async function POST(request: Request) {
 		return NextResponse.json({ ok: false, errors }, { status: 400 });
 	}
 
-	// Persist to console (and, in the Payload phase, to the contactSubmissions
-	// collection). The console log is the audit trail during this phase.
-	console.log("[contact] submission received", {
-		receivedAt,
-		pageUrl,
-		name: payload.name,
-		email: payload.email,
-		phone: payload.phone,
-		source: payload.source,
-		messageLength: payload.message?.length ?? 0,
-	});
+	// Persist to console (audit trail) and to the contactSubmissions
+	// table (the admin dashboard reads from this). The insert is
+	// wrapped in try/catch so a DB outage doesn't block the email
+	// send — the user should still hear back from the firm.
+	let submissionId: number | null = null;
+	try {
+		const ipAddress =
+			request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+			request.headers.get("x-real-ip") ??
+			null;
+		const [row] = await db
+			.insert(contactSubmissions)
+			.values({
+				// `!` is safe here — the validation block above ensures
+				// these are present before we reach the insert.
+				name: payload.name!,
+				email: payload.email!,
+				phone: payload.phone || null,
+				message: payload.message!,
+				source: payload.source || pageUrl,
+				ipAddress,
+			})
+			.returning({ id: contactSubmissions.id });
+		submissionId = row?.id ?? null;
+		console.log("[contact] submission received", {
+			id: submissionId,
+			receivedAt,
+			pageUrl,
+			name: payload.name,
+			email: payload.email,
+			phone: payload.phone,
+			source: payload.source,
+			messageLength: payload.message?.length ?? 0,
+		});
+	} catch (e) {
+		console.error(
+			"[contact] DB insert failed; continuing with email send",
+			e,
+		);
+	}
 
 	// Send via Resend
 	const apiKey = process.env.RESEND_API_KEY;
@@ -252,7 +283,15 @@ export async function POST(request: Request) {
 		}
 
 		console.log("[contact] email sent", { id: data?.id, to: TO_EMAILS });
-		return NextResponse.json({ ok: true, id: data?.id, receivedAt });
+		return NextResponse.json({
+			ok: true,
+			// `id` is the Resend email ID (preserved for back-compat);
+			// `submissionId` is the row in contact_submissions so the
+			// admin can deep-link to the record.
+			id: data?.id,
+			submissionId,
+			receivedAt,
+		});
 	} catch (e) {
 		console.error("[contact] Resend exception", e);
 		return NextResponse.json(

@@ -45,9 +45,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
 	const [pageCountRow] = await db.select({ n: count() }).from(pages);
-	const [serviceCountRow] = await db
-		.select({ n: count() })
-		.from(services);
+	const [serviceCountRow] = await db.select({ n: count() }).from(services);
 	const [submissionCountRow] = await db
 		.select({ n: count() })
 		.from(contactSubmissions);
@@ -60,9 +58,7 @@ export default async function AdminHome() {
 		<div>
 			<div className="mb-8 flex items-start justify-between">
 				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">
-						Dashboard
-					</h1>
+					<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 					<p className="mt-1 text-sm text-neutral-600">
 						Welcome back. Pick a section to manage.
 					</p>
@@ -100,8 +96,7 @@ export default async function AdminHome() {
 					<div className="mb-2 text-2xl">🛠</div>
 					<h2 className="text-base font-semibold">Services</h2>
 					<p className="mt-1 text-sm text-neutral-600">
-						{serviceCount} services. Add, edit, reorder, or
-						remove.
+						{serviceCount} services. Add, edit, reorder, or remove.
 					</p>
 					<Link
 						href="/admin/services"
@@ -125,16 +120,17 @@ export default async function AdminHome() {
 				</div>
 				<div className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
 					<div className="mb-2 text-2xl">✉️</div>
-					<h2 className="text-base font-semibold">
-						Contact Submissions
-					</h2>
+					<h2 className="text-base font-semibold">Contact Submissions</h2>
 					<p className="mt-1 text-sm text-neutral-600">
-						{submissionCount} submissions so far. Browse, search,
-						and export CSV.
+						{submissionCount} submissions so far. Browse, search, and export
+						CSV.
 					</p>
-					<p className="mt-3 text-xs text-neutral-400">
-						Coming on Day 4.
-					</p>
+					<Link
+						href="/admin/submissions"
+						className="mt-3 inline-block text-sm font-medium text-neutral-900 underline-offset-2 hover:underline"
+					>
+						Open →
+					</Link>
 				</div>
 			</div>
 		</div>

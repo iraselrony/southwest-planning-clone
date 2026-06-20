@@ -31,10 +31,7 @@ export async function POST(request: Request) {
 	try {
 		raw = await request.json();
 	} catch {
-		return NextResponse.json(
-			{ error: "Invalid JSON body" },
-			{ status: 400 },
-		);
+		return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
 	}
 	const parsed = Body.safeParse(raw);
 	if (!parsed.success) {
@@ -62,14 +59,8 @@ export async function POST(request: Request) {
 	}
 
 	const cases = orderedIds
-		.map(
-			(id, idx) =>
-				sql`WHEN ${id} THEN ${idx + 1}`,
-		)
-		.reduce<ReturnType<typeof sql>>(
-			(acc, cur) => sql`${acc} ${cur}`,
-			sql``,
-		);
+		.map((id, idx) => sql`WHEN ${id} THEN ${idx + 1}`)
+		.reduce<ReturnType<typeof sql>>((acc, cur) => sql`${acc} ${cur}`, sql``);
 
 	await db
 		.update(servicesTable)

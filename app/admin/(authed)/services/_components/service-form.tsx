@@ -84,9 +84,7 @@ export function ServiceForm({
 		});
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			alert(
-				`Save failed: ${err.error ?? res.statusText ?? "unknown"}`,
-			);
+			alert(`Save failed: ${err.error ?? res.statusText ?? "unknown"}`);
 			return;
 		}
 		setSavedAt(new Date());
@@ -101,11 +99,7 @@ export function ServiceForm({
 
 	async function handleDelete() {
 		if (initial.id == null) return;
-		if (
-			!confirm(
-				`Delete "${initial.name}"? This cannot be undone.`,
-			)
-		) {
+		if (!confirm(`Delete "${initial.name}"? This cannot be undone.`)) {
 			return;
 		}
 		const res = await fetch(`/api/admin/services/${initial.id}`, {
@@ -113,9 +107,7 @@ export function ServiceForm({
 		});
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			alert(
-				`Delete failed: ${err.error ?? res.statusText ?? "unknown"}`,
-			);
+			alert(`Delete failed: ${err.error ?? res.statusText ?? "unknown"}`);
 			return;
 		}
 		startTransition(() => router.push("/admin/services"));
@@ -165,8 +157,7 @@ export function ServiceForm({
 					Card
 				</h2>
 				<p className="mt-1 text-xs text-neutral-500">
-					Shown on the homepage grid and the service detail page
-					hero.
+					Shown on the homepage grid and the service detail page hero.
 				</p>
 				<div className="mt-4 space-y-4">
 					<div>
@@ -176,10 +167,7 @@ export function ServiceForm({
 						>
 							Card image
 						</label>
-						<ImageUpload
-							value={cardImageUrl}
-							onChange={setCardImageUrl}
-						/>
+						<ImageUpload value={cardImageUrl} onChange={setCardImageUrl} />
 					</div>
 					<div>
 						<label
@@ -196,8 +184,8 @@ export function ServiceForm({
 							className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
 						/>
 						<p className="mt-1 text-xs text-neutral-500">
-							Shown on the card. Also used for the service
-							page's meta description.
+							Shown on the card. Also used for the service page's meta
+							description.
 						</p>
 					</div>
 				</div>
@@ -209,8 +197,8 @@ export function ServiceForm({
 					Long description
 				</h2>
 				<p className="mt-1 text-xs text-neutral-500">
-					Tiptap JSON document. Day 5 replaces this with a visual
-					rich-text editor.
+					Tiptap JSON document. Day 5 replaces this with a visual rich-text
+					editor.
 				</p>
 				<textarea
 					value={longDescriptionText}
@@ -220,9 +208,7 @@ export function ServiceForm({
 					className="mt-3 block w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
 				/>
 				{longDescriptionError && (
-					<p className="mt-2 text-sm text-red-600">
-						{longDescriptionError}
-					</p>
+					<p className="mt-2 text-sm text-red-600">{longDescriptionError}</p>
 				)}
 			</section>
 
@@ -235,9 +221,7 @@ export function ServiceForm({
 					<input
 						type="checkbox"
 						checked={contactFormEnabled}
-						onChange={(e) =>
-							setContactFormEnabled(e.target.checked)
-						}
+						onChange={(e) => setContactFormEnabled(e.target.checked)}
 						className="rounded border-neutral-300"
 					/>
 					Show contact form on this service's page
@@ -269,11 +253,7 @@ export function ServiceForm({
 						disabled={isPending}
 						className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
 					>
-						{isPending
-							? "Saving…"
-							: mode === "create"
-								? "Create"
-								: "Save"}
+						{isPending ? "Saving…" : mode === "create" ? "Create" : "Save"}
 					</button>
 				</div>
 			</div>

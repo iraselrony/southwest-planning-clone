@@ -26,8 +26,7 @@ export function ReorderButtons({
 
 	async function move(direction: "up" | "down") {
 		const orderedIds = rows.map((r) => r.id);
-		const targetIdx =
-			direction === "up" ? idx - 1 : idx + 1;
+		const targetIdx = direction === "up" ? idx - 1 : idx + 1;
 		if (targetIdx < 0 || targetIdx >= orderedIds.length) return;
 		// Swap
 		[orderedIds[idx], orderedIds[targetIdx]] = [
@@ -41,9 +40,7 @@ export function ReorderButtons({
 		});
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			alert(
-				`Reorder failed: ${err.error ?? res.statusText ?? "unknown"}`,
-			);
+			alert(`Reorder failed: ${err.error ?? res.statusText ?? "unknown"}`);
 			return;
 		}
 		startTransition(() => router.refresh());
