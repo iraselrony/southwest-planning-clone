@@ -15,8 +15,6 @@
  * server-side `_lib/page.ts` rewriter.
  */
 (() => {
-	
-
 	function getField(form, ...names) {
 		for (const n of names) {
 			const el = form.querySelector(`[name="${n}"]`);
@@ -123,7 +121,7 @@
 
 	function init() {
 		const forms = document.querySelectorAll(
-			'form[data-contact-form], form.form, form.w-form',
+			"form[data-contact-form], form.form, form.w-form",
 		);
 		forms.forEach(attach);
 	}

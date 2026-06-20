@@ -73,7 +73,7 @@ for (const { url, file } of rows) {
 import { readFile } from 'node:fs/promises';
 import DOMPurify from 'isomorphic-dompurify';
 import { buildHeadFromHtml, extractBodyInner } from '${libImport}';
-import { getPageSeo } from '${libImport.replace(/_lib\/page$/, '_lib/seo')}';
+import { getPageSeo } from '${libImport.replace(/_lib\/page$/, "_lib/seo")}';
 
 const SOURCE = '${relMirror}';
 const PAGE_URL = '${url}';

@@ -250,7 +250,7 @@ export function extractBodyInner(html: string, pageUrl: string = "/"): string {
 		: isServicePage
 			? `service-page:${pageUrl.replace(/^\/services\//, "")}`
 			: `other:${pageUrl}`;
-	$body.find('form.form, form.w-form').each((_, el) => {
+	$body.find("form.form, form.w-form").each((_, el) => {
 		$(el).attr("data-contact-form", sourceTag);
 	});
 
@@ -333,8 +333,7 @@ export function buildHeadFromHtml(
 			type: (og.type as "website" | "article" | undefined) ?? "website",
 		},
 		twitter: {
-			...(twitter.card === "summary" ||
-			twitter.card === "summary_large_image"
+			...(twitter.card === "summary" || twitter.card === "summary_large_image"
 				? { card: twitter.card }
 				: { card: "summary_large_image" }),
 			title: seo?.title ?? twitter.title,

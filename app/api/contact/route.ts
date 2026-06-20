@@ -8,9 +8,13 @@
 //
 // Required env vars (set in Vercel project settings):
 //   RESEND_API_KEY        Resend API key. Required.
-//   CONTACT_TO_EMAIL      Destination address (default: info@southwestplanningconsultancy.co.uk).
+//   CONTACT_TO_EMAIL      Comma-separated destination address(es).
+//                         Default: info@southwestplanningconsultancy.co.uk
+//                         Example: "info@southwestplanningconsultancy.co.uk, partner@example.com"
 //   CONTACT_FROM_EMAIL    From address on the email. Must be on a Resend-verified
-//                         domain. Default: "South West Planning <onboarding@resend.dev>".
+//                         domain once you upgrade / verify. Default: onboarding@resend.dev
+//                         (the Resend-provided address, valid for the free tier
+//                         until you verify your own domain).
 //
 // In the Payload phase, this route also inserts into the `contactSubmissions`
 // collection via Payload's Local API so the firm has a record of every enquiry.
@@ -30,11 +34,32 @@ type ContactPayload = {
 	[k: string]: unknown;
 };
 
-const TO_EMAIL = process.env.CONTACT_TO_EMAIL ?? "info@southwestplanningconsultancy.co.uk";
-const FROM_EMAIL =
-	process.env.CONTACT_FROM_EMAIL ?? "South West Planning <onboarding@resend.dev>";
+/**
+ * Parse a comma-separated env var into a list of trimmed, non-empty
+ * addresses. Resend accepts `to` as either a string or a string[]; we always
+ * pass an array so the same code path works for one or many recipients.
+ */
+function parseEmailList(
+	raw: string | undefined,
+	fallback: string[],
+): string[] {
+	const source = raw ?? fallback.join(",");
+	const list = source
+		.split(",")
+		.map((s) => s.trim())
+		.filter((s) => s.length > 0);
+	return list.length > 0 ? list : fallback;
+}
 
-function readField(record: Record<string, unknown>, ...names: string[]): string {
+const TO_EMAILS = parseEmailList(process.env.CONTACT_TO_EMAIL, [
+	"info@southwestplanningconsultancy.co.uk",
+]);
+const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL ?? "onboarding@resend.dev";
+
+function readField(
+	record: Record<string, unknown>,
+	...names: string[]
+): string {
 	for (const n of names) {
 		const v = record[n];
 		if (typeof v === "string" && v.trim()) return v.trim();
@@ -43,8 +68,20 @@ function readField(record: Record<string, unknown>, ...names: string[]): string 
 }
 
 function normalisePayload(raw: Record<string, unknown>): ContactPayload {
-	const first = readField(raw, "First-name", "First-name-2", "firstName", "first_name");
-	const last = readField(raw, "Last-name", "Last-name-2", "lastName", "last_name");
+	const first = readField(
+		raw,
+		"First-name",
+		"First-name-2",
+		"firstName",
+		"first_name",
+	);
+	const last = readField(
+		raw,
+		"Last-name",
+		"Last-name-2",
+		"lastName",
+		"last_name",
+	);
 	const fullName = readField(raw, "name", "Name");
 	const name = fullName || [first, last].filter(Boolean).join(" ").trim();
 	return {
@@ -68,7 +105,10 @@ function escapeHtml(s: string): string {
 		.replace(/'/g, "&#39;");
 }
 
-function buildEmailBody(p: ContactPayload, pageUrl: string): { text: string; html: string } {
+function buildEmailBody(
+	p: ContactPayload,
+	pageUrl: string,
+): { text: string; html: string } {
 	const text = [
 		`New contact form submission`,
 		``,
@@ -103,7 +143,10 @@ function buildEmailBody(p: ContactPayload, pageUrl: string): { text: string; htm
 }
 
 export async function POST(request: Request) {
-	const pageUrl = request.headers.get("referer") || request.headers.get("origin") || "unknown";
+	const pageUrl =
+		request.headers.get("referer") ||
+		request.headers.get("origin") ||
+		"unknown";
 	let raw: Record<string, unknown> = {};
 
 	try {
@@ -169,7 +212,8 @@ export async function POST(request: Request) {
 		return NextResponse.json(
 			{
 				ok: false,
-				error: "Email service is not configured. Please call the firm directly.",
+				error:
+					"Email service is not configured. Please call the firm directly.",
 				receivedAt,
 			},
 			{ status: 503 },
@@ -182,9 +226,16 @@ export async function POST(request: Request) {
 	const subject = `New contact form submission from ${payload.name}`;
 
 	try {
+		console.log("[contact] sending", { from: FROM_EMAIL, to: TO_EMAILS, subject });
+
+		// Send to the configured recipient list. Resend accepts a single
+		// address or an array; the env var can be a single email or a
+		// comma-separated list. (When the firm upgrades to a verified
+		// domain, add `info@southwestplanningconsultancy.co.uk` to the list
+		// and the send will go to both addresses.)
 		const { data, error } = await resend.emails.send({
 			from: FROM_EMAIL,
-			to: TO_EMAIL,
+			to: TO_EMAILS,
 			replyTo: payload.email,
 			subject,
 			text,
@@ -199,7 +250,7 @@ export async function POST(request: Request) {
 			);
 		}
 
-		console.log("[contact] email sent", { id: data?.id, to: TO_EMAIL });
+		console.log("[contact] email sent", { id: data?.id, to: TO_EMAILS });
 		return NextResponse.json({ ok: true, id: data?.id, receivedAt });
 	} catch (e) {
 		console.error("[contact] Resend exception", e);

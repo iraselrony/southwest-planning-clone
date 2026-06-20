@@ -119,9 +119,15 @@ try {
 		// verified on the Resend account. The infrastructure (route, validation,
 		// payload shaping) is working; the user needs to verify the destination
 		// domain on resend.com/domains. Surface this as a warning, not a fail.
-		console.log(`  ⚠ POST /api/contact → 502 (Resend rejected the send: ${json.error})`);
-		console.log(`     This is expected if the destination email domain isn't verified on the Resend account.`);
-		console.log(`     Verify the domain at https://resend.com/domains or set CONTACT_TO_EMAIL to a verified address.`);
+		console.log(
+			`  ⚠ POST /api/contact → 502 (Resend rejected the send: ${json.error})`,
+		);
+		console.log(
+			`     This is expected if the destination email domain isn't verified on the Resend account.`,
+		);
+		console.log(
+			`     Verify the domain at https://resend.com/domains or set CONTACT_TO_EMAIL to a verified address.`,
+		);
 	} else {
 		fail(`POST /api/contact → ${res.status} ${JSON.stringify(json)}`);
 	}
