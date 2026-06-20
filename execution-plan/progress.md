@@ -89,3 +89,5 @@ See `screenshots/diff/diff-report.md` for the full table. Summary:
 | ⚠️ 15–35% | `/` (slider state), `/contact` (form) | 24%, 36% |
 
 The "warnings" are noise from animation states, broken hero URLs, and form structure — not structural content differences. Payload refactor will close them.
+
+
