@@ -60,10 +60,22 @@ All 18 pages route. SEO preserved per `seo-audit.md`. Sitemap, robots, contact f
 
 - Real Payload collections, admin dashboard
 - Migrating assets to Vercel Blob
-- Form submissions persistence
+- Form submissions persistence (DB) — email send via Resend is live
 - Refactoring `dangerouslySetInnerHTML` pages into proper React components
 - GitHub repo creation
 - Vercel deployment
+
+## Frontend polish (commit c7fa5ac, 2026-06-20)
+
+Three more user-facing fixes added before starting the backend:
+
+1. **Per-page SEO titles and descriptions.** The 14 service pages had a generic `Southwest Planning Consultancy` placeholder title and no meta description in the original Webflow HTML. Added `app/_lib/seo.ts` with hardcoded title + description for all 18 pages. `buildHeadFromHtml()` now takes a `PageSeo` override and uses it as the source of truth for `<title>`, `<meta description>`, OG, and Twitter Card. Adds canonical URL (the original had none on most pages). The seo.ts module is the single replacement point for the Payload phase — the shape stays the same, the implementation swaps to a Payload Local API lookup.
+
+2. **GFIVEDESIGN footer credit removed.** The original site is Webflow-built and has a `Webdesign by GFIVEDESIGN` link in the footer back to the designer's site. Strips the entire link element (including the leading `Webdesign by` text) so no orphan markup remains. `removeFooterCredits()` in `app/_lib/page.ts`.
+
+3. **Contact form → Resend.** Both contact forms (on `/contact` and on every `/services/*` page) now POST to `/api/contact`, which validates input, normalises the two different Webflow field-name conventions (`First-name` / `First-name-2` etc.) into `{name, email, phone, message, source}`, and sends via the Resend SDK to `CONTACT_TO_EMAIL` (default `info@southwestplanningconsultancy.co.uk`) with `replyTo` set to the submitter. A small client-side script (`public/contact-form.js`) intercepts the form's default `method="get"` submit and routes the response into the existing `.w-form-done` / `.w-form-fail` divs. Vercel env vars: `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` are set for production and preview.
+
+    **Resend domain verification:** the user's Resend account currently only allows sending to the account owner's verified email (`iraselrony@gmail.com`). Production submissions to `info@southwestplanningconsultancy.co.uk` will be rejected by Resend (HTTP 403) until `southwestplanningconsultancy.co.uk` is verified at <https://resend.com/domains>. The API returns 502 with a clear error in that case, and `verify.mjs` surfaces it as a warning rather than a failure.
 
 ## Visual diff snapshot
 
