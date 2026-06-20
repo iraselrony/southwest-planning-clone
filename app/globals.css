@@ -1,6 +1,8 @@
-/* Minimal global reset — the original Webflow stylesheet handles all real styling.
-   This file exists so Next.js has a CSS module to import. The Webflow CSS is
-   loaded via <link> in app/layout.tsx so we don't bundle it into Next's CSS pipeline. */
+/* Minimal global reset — the original Webflow stylesheet handles all real
+   styling. This file exists so Next.js has a CSS module to import and so we
+   can override the body font-family to use the Next-font self-hosted
+   Montserrat (which is named with a hash and wouldn't otherwise be picked up
+   by the Webflow CSS, which uses `font-family: Montserrat, sans-serif`). */
 
 html,
 body {
@@ -8,4 +10,28 @@ body {
 	padding: 0;
 	background: #fff;
 	color: #000;
+}
+
+/* Force every text-rendering element to use the self-hosted Montserrat
+   loaded via next/font/google in app/layout.tsx. The Webflow CSS sets
+   `font-family: Montserrat, sans-serif` on many elements; the
+   next/font/google family name has a hashed suffix, so without this override
+   the browser would still fall back to the system sans-serif. */
+body,
+body p,
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6,
+body a,
+body span,
+body div,
+body li,
+body button,
+body input,
+body textarea,
+body label {
+	font-family: var(--font-montserrat), Montserrat, sans-serif;
 }

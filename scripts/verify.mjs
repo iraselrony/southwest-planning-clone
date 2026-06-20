@@ -137,6 +137,48 @@ for (const a of assets) {
 	}
 }
 
+console.log(
+	"\n7. Every internal link on every page returns 200 (catches .html 404s)",
+);
+// Crawl the rendered HTML of every page and follow every internal <a href>.
+// Catches the class of bug where the page body's links point at paths that
+// don't exist as routes (e.g. Webflow's `contact.html` style links that
+// 404 because Next.js App Router only mounts clean-URL routes).
+let crawlFail = 0;
+let crawlChecked = 0;
+for (const url of urls) {
+	try {
+		const res = await fetch(`${BASE}${url}`);
+		const html = await res.text();
+		const seen = new Set();
+		for (const m of html.matchAll(/<a\s+[^>]*href="([^"]+)"/gi)) {
+			const href = m[1];
+			// Skip external schemes, protocol-relative, pure anchors, mailto, tel
+			if (/^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i.test(href)) continue;
+			const [path] = href.split("#");
+			if (path) seen.add(path);
+		}
+		for (const path of seen) {
+			const target = new URL(path, `${BASE}${url}`).toString();
+			const r = await fetch(target, { redirect: "manual" });
+			crawlChecked++;
+			if (r.status === 200 || r.status === 301 || r.status === 308) {
+				pass(`link on ${url}: ${path} → ${r.status}`);
+			} else {
+				fail(`link on ${url}: ${path} → ${r.status}`);
+				crawlFail++;
+			}
+		}
+	} catch (e) {
+		fail(`crawl ${url} → ${e.message}`);
+		crawlFail++;
+	}
+}
+if (crawlFail === 0)
+	pass(
+		`no broken internal links (${crawlChecked} links checked across ${urls.length} pages)`,
+	);
+
 const failed = checks.filter((c) => !c.ok).length;
 console.log(`\n${"=".repeat(60)}`);
 console.log(

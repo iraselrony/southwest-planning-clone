@@ -1,6 +1,20 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
+
+// Self-hosted Montserrat. next/font/google downloads the font files at build
+// time and serves them from the same origin as the site, eliminating the
+// runtime dependency on fonts.googleapis.com / fonts.gstatic.com. The
+// `--font-montserrat` CSS variable is applied to <body> in globals.css so the
+// Webflow CSS (which references `font-family: Montserrat`) picks up the
+// self-hosted version.
+const montserrat = Montserrat({
+	subsets: ["latin"],
+	weight: ["300", "400", "500", "600", "700", "800"],
+	display: "swap",
+	variable: "--font-montserrat",
+});
 
 export const metadata: Metadata = {
 	title: {
@@ -18,24 +32,13 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en-GB">
+		<html lang="en-GB" className={montserrat.variable}>
 			<head>
 				{/* Webflow global stylesheet, served from /public preserving original path */}
 				<link
 					rel="stylesheet"
 					href="/cdn.prod.website-files.com/62c2cea31ea6c6cc6f1800b3/css/franks-fantabulous-site-7-7d884cdc156fc.8b2ffb3ba.css"
 					type="text/css"
-				/>
-				{/* Google Fonts — Montserrat, the body font used by the Webflow CSS */}
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link
-					rel="preconnect"
-					href="https://fonts.gstatic.com"
-					crossOrigin="anonymous"
-				/>
-				<link
-					rel="stylesheet"
-					href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
 				/>
 				{/* Favicon (Webflow-hosted original) */}
 				<link

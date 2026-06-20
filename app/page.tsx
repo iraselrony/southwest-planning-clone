@@ -6,6 +6,7 @@ import DOMPurify from 'isomorphic-dompurify';
 import { buildHeadFromHtml, extractBodyInner } from './_lib/page';
 
 const SOURCE = 'execution-plan/raw-mirror/www.southwestplanningconsultancy.co.uk/index.html';
+const PAGE_URL = '/';
 
 export const dynamic = 'force-static';
 export const revalidate = false;
@@ -13,7 +14,7 @@ export const revalidate = false;
 export async function generateMetadata() {
   try {
     const raw = await readFile(SOURCE, 'utf-8');
-    return buildHeadFromHtml(raw, '/');
+    return buildHeadFromHtml(raw, PAGE_URL);
   } catch {
     return {};
   }
@@ -23,7 +24,7 @@ export default async function HomePage() {
   let body = '';
   try {
     const raw = await readFile(SOURCE, 'utf-8');
-    body = extractBodyInner(raw);
+    body = extractBodyInner(raw, PAGE_URL);
   } catch (e) {
     body = '<p>Failed to load mirrored content.</p>';
   }
