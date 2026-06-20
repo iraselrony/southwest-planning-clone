@@ -23,16 +23,10 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 	const router = useRouter();
 	const [title, setTitle] = useState(page.title);
 	const [metaTitle, setMetaTitle] = useState(page.metaTitle);
-	const [metaDescription, setMetaDescription] = useState(
-		page.metaDescription,
-	);
-	const [ogImageUrl, setOgImageUrl] = useState<string | null>(
-		page.ogImageUrl,
-	);
+	const [metaDescription, setMetaDescription] = useState(page.metaDescription);
+	const [ogImageUrl, setOgImageUrl] = useState<string | null>(page.ogImageUrl);
 	const [showInNav, setShowInNav] = useState(page.showInNav);
-	const [bodyText, setBodyText] = useState(
-		JSON.stringify(page.body, null, 2),
-	);
+	const [bodyText, setBodyText] = useState(JSON.stringify(page.body, null, 2));
 	const [bodyError, setBodyError] = useState<string | null>(null);
 	const [savedAt, setSavedAt] = useState<Date | null>(null);
 	const [isPending, startTransition] = useTransition();
@@ -42,9 +36,7 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 		try {
 			bodyJson = JSON.parse(bodyText);
 		} catch (e) {
-			setBodyError(
-				`Body JSON is invalid: ${(e as Error).message}`,
-			);
+			setBodyError(`Body JSON is invalid: ${(e as Error).message}`);
 			return;
 		}
 		setBodyError(null);
@@ -66,9 +58,7 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 		);
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			alert(
-				`Save failed: ${err.error ?? res.statusText ?? "unknown error"}`,
-			);
+			alert(`Save failed: ${err.error ?? res.statusText ?? "unknown error"}`);
 			return;
 		}
 		setSavedAt(new Date());
@@ -91,8 +81,8 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 					SEO & meta
 				</h2>
 				<p className="mt-1 text-xs text-neutral-500">
-					Title, description, and Open Graph image. Used for
-					search results and social previews.
+					Title, description, and Open Graph image. Used for search results and
+					social previews.
 				</p>
 
 				<div className="mt-4 space-y-4">
@@ -124,10 +114,7 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 						>
 							OG image
 						</label>
-						<ImageUpload
-							value={ogImageUrl}
-							onChange={setOgImageUrl}
-						/>
+						<ImageUpload value={ogImageUrl} onChange={setOgImageUrl} />
 					</div>
 					<label className="flex items-center gap-2 text-sm text-neutral-700">
 						<input
@@ -149,9 +136,9 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 							Body (editable zones)
 						</h2>
 						<p className="mt-1 text-xs text-neutral-500">
-							JSON map of zone ID → block content. Each block
-							has a <code>type</code> field. Day 5 will
-							replace this with per-zone form editors.
+							JSON map of zone ID → block content. Each block has a{" "}
+							<code>type</code> field. Day 5 will replace this with per-zone
+							form editors.
 						</p>
 					</div>
 				</div>
@@ -162,9 +149,7 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 					spellCheck={false}
 					className="mt-3 block w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
 				/>
-				{bodyError && (
-					<p className="mt-2 text-sm text-red-600">{bodyError}</p>
-				)}
+				{bodyError && <p className="mt-2 text-sm text-red-600">{bodyError}</p>}
 			</section>
 
 			{/* SAVE */}

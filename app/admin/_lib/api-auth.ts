@@ -27,10 +27,7 @@ export async function requireAdminApi(): Promise<AdminApiResult> {
 	if (!session?.user?.email) {
 		return {
 			ok: false,
-			response: NextResponse.json(
-				{ error: "Not signed in" },
-				{ status: 401 },
-			),
+			response: NextResponse.json({ error: "Not signed in" }, { status: 401 }),
 		};
 	}
 	const [admin] = await db
@@ -41,10 +38,7 @@ export async function requireAdminApi(): Promise<AdminApiResult> {
 	if (!admin) {
 		return {
 			ok: false,
-			response: NextResponse.json(
-				{ error: "Not an admin" },
-				{ status: 403 },
-			),
+			response: NextResponse.json({ error: "Not an admin" }, { status: 403 }),
 		};
 	}
 	return { ok: true, userId: admin.id, email: admin.email };

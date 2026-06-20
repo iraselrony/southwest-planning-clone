@@ -39,9 +39,7 @@ export function ImageUpload({
 				}),
 			});
 			if (!signRes.ok) {
-				throw new Error(
-					`sign failed: ${signRes.status} ${signRes.statusText}`,
-				);
+				throw new Error(`sign failed: ${signRes.status} ${signRes.statusText}`);
 			}
 			const sign = (await signRes.json()) as {
 				url: string;
@@ -104,9 +102,7 @@ export function ImageUpload({
 					</button>
 				)}
 			</div>
-			{uploading && (
-				<p className="text-xs text-neutral-500">Uploading…</p>
-			)}
+			{uploading && <p className="text-xs text-neutral-500">Uploading…</p>}
 			{error && <p className="text-xs text-red-600">{error}</p>}
 		</div>
 	);

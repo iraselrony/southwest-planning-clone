@@ -49,9 +49,7 @@ export default async function AdminPageEdit({
 					<h1 className="mt-2 font-mono text-xl font-semibold tracking-tight">
 						{row.slug}
 					</h1>
-					<p className="mt-1 text-sm text-neutral-600">
-						{row.title}
-					</p>
+					<p className="mt-1 text-sm text-neutral-600">{row.title}</p>
 				</div>
 				<Link
 					href={row.slug}

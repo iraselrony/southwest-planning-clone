@@ -31,9 +31,7 @@ export default async function AdminPagesList() {
 					>
 						← Dashboard
 					</Link>
-					<h1 className="mt-2 text-2xl font-semibold tracking-tight">
-						Pages
-					</h1>
+					<h1 className="mt-2 text-2xl font-semibold tracking-tight">Pages</h1>
 					<p className="mt-1 text-sm text-neutral-600">
 						{rows.length} pages. Edit SEO and body content.
 					</p>
@@ -63,28 +61,20 @@ export default async function AdminPagesList() {
 					</thead>
 					<tbody className="divide-y divide-neutral-200">
 						{rows.map((row) => (
-							<tr
-								key={row.slug}
-								className="hover:bg-neutral-50"
-							>
+							<tr key={row.slug} className="hover:bg-neutral-50">
 								<td className="px-4 py-2.5 font-mono text-xs text-neutral-700">
 									{row.slug}
 								</td>
-								<td className="px-4 py-2.5 text-neutral-900">
-									{row.title}
-								</td>
+								<td className="px-4 py-2.5 text-neutral-900">{row.title}</td>
 								<td className="px-4 py-2.5 text-neutral-600">
 									{row.showInNav ? "✓" : "—"}
 								</td>
 								<td className="px-4 py-2.5 text-neutral-600">
-									{new Date(row.updatedAt).toLocaleDateString(
-										"en-GB",
-										{
-											day: "2-digit",
-											month: "short",
-											year: "numeric",
-										},
-									)}
+									{new Date(row.updatedAt).toLocaleDateString("en-GB", {
+										day: "2-digit",
+										month: "short",
+										year: "numeric",
+									})}
 								</td>
 								<td className="px-4 py-2.5 text-right">
 									<Link

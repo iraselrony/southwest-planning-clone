@@ -24,10 +24,7 @@ export async function PUT(request: Request) {
 	const url = new URL(request.url);
 	const path = url.searchParams.get("path");
 	if (!path) {
-		return NextResponse.json(
-			{ error: "Missing ?path=" },
-			{ status: 400 },
-		);
+		return NextResponse.json({ error: "Missing ?path=" }, { status: 400 });
 	}
 	const safePath = path.replace(/\.\./g, "_");
 	const fullPath = join(ROOT, safePath);
@@ -48,10 +45,7 @@ export async function GET(request: Request) {
 	const url = new URL(request.url);
 	const path = url.searchParams.get("path");
 	if (!path) {
-		return NextResponse.json(
-			{ error: "Missing ?path=" },
-			{ status: 400 },
-		);
+		return NextResponse.json({ error: "Missing ?path=" }, { status: 400 });
 	}
 	const safePath = path.replace(/\.\./g, "_");
 	try {
@@ -60,9 +54,6 @@ export async function GET(request: Request) {
 			headers: { "Content-Type": "application/octet-stream" },
 		});
 	} catch {
-		return NextResponse.json(
-			{ error: "Not found" },
-			{ status: 404 },
-		);
+		return NextResponse.json({ error: "Not found" }, { status: 404 });
 	}
 }
