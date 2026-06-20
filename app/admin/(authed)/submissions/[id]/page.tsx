@@ -57,17 +57,11 @@ export default async function AdminSubmissionDetail({
 					</h2>
 					<dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<div>
-							<dt className="text-xs font-medium text-neutral-500">
-								Name
-							</dt>
-							<dd className="mt-0.5 text-sm text-neutral-900">
-								{row.name}
-							</dd>
+							<dt className="text-xs font-medium text-neutral-500">Name</dt>
+							<dd className="mt-0.5 text-sm text-neutral-900">{row.name}</dd>
 						</div>
 						<div>
-							<dt className="text-xs font-medium text-neutral-500">
-								Email
-							</dt>
+							<dt className="text-xs font-medium text-neutral-500">Email</dt>
 							<dd className="mt-0.5 text-sm text-neutral-900">
 								<a
 									href={`mailto:${row.email}`}
@@ -79,9 +73,7 @@ export default async function AdminSubmissionDetail({
 						</div>
 						{row.phone && (
 							<div>
-								<dt className="text-xs font-medium text-neutral-500">
-									Phone
-								</dt>
+								<dt className="text-xs font-medium text-neutral-500">Phone</dt>
 								<dd className="mt-0.5 text-sm text-neutral-900">
 									<a
 										href={`tel:${row.phone}`}
@@ -93,9 +85,7 @@ export default async function AdminSubmissionDetail({
 							</div>
 						)}
 						<div>
-							<dt className="text-xs font-medium text-neutral-500">
-								Source
-							</dt>
+							<dt className="text-xs font-medium text-neutral-500">Source</dt>
 							<dd className="mt-0.5 font-mono text-xs text-neutral-700">
 								{row.source}
 							</dd>

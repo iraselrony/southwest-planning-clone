@@ -338,3 +338,6 @@ export function buildHeadFromHtml(
 }
 
 export { absolutizeAssetPaths };
+export { injectBlocks, getPageBody } from "./blocks";
+export { ZONES } from "./zones";
+export type { Zone, BlockType } from "./zones";

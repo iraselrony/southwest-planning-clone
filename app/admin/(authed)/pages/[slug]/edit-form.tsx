@@ -1,13 +1,16 @@
 /**
- * Page edit form (client). Handles meta fields + body JSON.
- * Auto-saves on blur (no save button needed, but there is one too).
+ * Page edit form (client). Handles meta fields + per-zone block
+ * editors. Falls back to a JSON textarea for pages with no zone
+ * map (or for advanced users who want raw access).
  */
 "use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { PageSeo } from "../../../../../config/pages";
 import { ImageUpload } from "../../../_components/image-upload";
+import { ZoneEditor } from "./_components/zone-editor";
+import type { Zone } from "../../../../_lib/zones";
+import type { AnyBlock } from "../../../../_lib/blocks";
 
 type PageForEdit = {
 	slug: string;
@@ -19,28 +22,29 @@ type PageForEdit = {
 	body: Record<string, unknown>;
 };
 
-export function PageEditForm({ page }: { page: PageForEdit }) {
+export function PageEditForm({
+	page,
+	zones,
+}: {
+	page: PageForEdit;
+	zones: Zone[];
+}) {
 	const router = useRouter();
 	const [title, setTitle] = useState(page.title);
 	const [metaTitle, setMetaTitle] = useState(page.metaTitle);
-	const [metaDescription, setMetaDescription] = useState(page.metaDescription);
+	const [metaDescription, setMetaDescription] = useState(
+		page.metaDescription,
+	);
 	const [ogImageUrl, setOgImageUrl] = useState<string | null>(page.ogImageUrl);
 	const [showInNav, setShowInNav] = useState(page.showInNav);
-	const [bodyText, setBodyText] = useState(JSON.stringify(page.body, null, 2));
-	const [bodyError, setBodyError] = useState<string | null>(null);
+	const [body, setBody] = useState<Record<string, unknown>>(
+		page.body ?? {},
+	);
+	const [showRawJson, setShowRawJson] = useState(false);
 	const [savedAt, setSavedAt] = useState<Date | null>(null);
 	const [isPending, startTransition] = useTransition();
 
 	async function save() {
-		let bodyJson: Record<string, unknown>;
-		try {
-			bodyJson = JSON.parse(bodyText);
-		} catch (e) {
-			setBodyError(`Body JSON is invalid: ${(e as Error).message}`);
-			return;
-		}
-		setBodyError(null);
-
 		const res = await fetch(
 			`/api/admin/pages/${encodeURIComponent(page.slug)}`,
 			{
@@ -52,19 +56,31 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 					metaDescription,
 					ogImageUrl,
 					showInNav,
-					body: bodyJson,
+					body,
 				}),
 			},
 		);
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			alert(`Save failed: ${err.error ?? res.statusText ?? "unknown error"}`);
+			alert(
+				`Save failed: ${err.error ?? res.statusText ?? "unknown error"}`,
+			);
 			return;
 		}
 		setSavedAt(new Date());
-		// Refresh the server data so the table view (in /admin/pages)
-		// shows the new updated_at timestamp.
 		startTransition(() => router.refresh());
+	}
+
+	function updateBlock(zoneId: string, block: AnyBlock) {
+		setBody((prev) => ({ ...prev, [zoneId]: block }));
+	}
+
+	function removeBlock(zoneId: string) {
+		setBody((prev) => {
+			const next = { ...prev };
+			delete next[zoneId];
+			return next;
+		});
 	}
 
 	return (
@@ -81,10 +97,9 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 					SEO & meta
 				</h2>
 				<p className="mt-1 text-xs text-neutral-500">
-					Title, description, and Open Graph image. Used for search results and
-					social previews.
+					Title, description, and Open Graph image. Used for
+					search results and social previews.
 				</p>
-
 				<div className="mt-4 space-y-4">
 					<Field
 						label="Page title (H1)"
@@ -114,7 +129,10 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 						>
 							OG image
 						</label>
-						<ImageUpload value={ogImageUrl} onChange={setOgImageUrl} />
+						<ImageUpload
+							value={ogImageUrl}
+							onChange={setOgImageUrl}
+						/>
 					</div>
 					<label className="flex items-center gap-2 text-sm text-neutral-700">
 						<input
@@ -128,28 +146,50 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 				</div>
 			</section>
 
-			{/* BODY (JSON editor for now; per-zone UI lands in Day 5) */}
-			<section className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
-				<div className="flex items-baseline justify-between">
-					<div>
-						<h2 className="text-sm font-semibold tracking-tight text-neutral-900">
-							Body (editable zones)
-						</h2>
-						<p className="mt-1 text-xs text-neutral-500">
-							JSON map of zone ID → block content. Each block has a{" "}
-							<code>type</code> field. Day 5 will replace this with per-zone
-							form editors.
-						</p>
+			{/* ZONES (per-zone block editors) */}
+			{zones.length === 0 ? (
+				<section className="rounded-lg border border-neutral-200 bg-white p-5 text-sm text-neutral-600 shadow-sm">
+					This page has no editable zones defined. Add some in{" "}
+					<code>app/_lib/zones.ts</code>.
+				</section>
+			) : (
+				zones.map((zone) => (
+					<ZoneEditor
+						key={zone.id}
+						zone={zone}
+						block={body[zone.id] as AnyBlock | undefined}
+						onChange={(b) => updateBlock(zone.id, b)}
+						onRemove={() => removeBlock(zone.id)}
+					/>
+				))
+			)}
+
+			{/* RAW JSON (advanced users / power features) */}
+			<section className="rounded-lg border border-neutral-200 bg-white shadow-sm">
+				<button
+					type="button"
+					onClick={() => setShowRawJson(!showRawJson)}
+					className="block w-full px-5 py-3 text-left text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+				>
+					{showRawJson ? "▼" : "▶"} Raw JSON (advanced)
+				</button>
+				{showRawJson && (
+					<div className="border-t border-neutral-200 p-5">
+						<textarea
+							value={JSON.stringify(body, null, 2)}
+							onChange={(e) => {
+								try {
+									setBody(JSON.parse(e.target.value));
+								} catch {
+									// ignore parse errors while typing
+								}
+							}}
+							rows={12}
+							spellCheck={false}
+							className="block w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-xs text-neutral-900"
+						/>
 					</div>
-				</div>
-				<textarea
-					value={bodyText}
-					onChange={(e) => setBodyText(e.target.value)}
-					rows={20}
-					spellCheck={false}
-					className="mt-3 block w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-xs text-neutral-900 shadow-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-				/>
-				{bodyError && <p className="mt-2 text-sm text-red-600">{bodyError}</p>}
+				)}
 			</section>
 
 			{/* SAVE */}
@@ -157,7 +197,7 @@ export function PageEditForm({ page }: { page: PageForEdit }) {
 				<div className="mx-auto flex max-w-6xl items-center justify-between">
 					<div className="text-sm text-neutral-600">
 						{isPending
-							? "Refreshing…"
+							? "Saving…"
 							: savedAt
 								? `Saved at ${savedAt.toLocaleTimeString()}`
 								: "Unsaved changes"}

@@ -68,8 +68,7 @@ export async function GET(request: Request) {
 			conditions.push(eq(contactSubmissions.source, source));
 		}
 	}
-	const whereExpr =
-		conditions.length > 0 ? and(...conditions) : undefined;
+	const whereExpr = conditions.length > 0 ? and(...conditions) : undefined;
 
 	const rows = await db
 		.select({

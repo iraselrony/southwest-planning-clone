@@ -116,10 +116,7 @@ export default async function AdminSubmissionsPage({
 			</div>
 
 			{/* Search + filter bar (client component, submits via GET) */}
-			<SearchBar
-				initialSearch={search}
-				initialSource={source}
-			/>
+			<SearchBar initialSearch={search} initialSource={source} />
 
 			{rows.length === 0 ? (
 				<div className="mt-6 rounded-lg border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500">
@@ -149,18 +146,13 @@ export default async function AdminSubmissionsPage({
 						</thead>
 						<tbody className="divide-y divide-neutral-200">
 							{rows.map((row) => (
-								<tr
-									key={row.id}
-									className="cursor-pointer hover:bg-neutral-50"
-								>
+								<tr key={row.id} className="cursor-pointer hover:bg-neutral-50">
 									<td className="whitespace-nowrap px-4 py-2.5 text-neutral-600">
 										<Link
 											href={`/admin/submissions/${row.id}`}
 											className="block"
 										>
-											{new Date(
-												row.submittedAt,
-											).toLocaleString("en-GB", {
+											{new Date(row.submittedAt).toLocaleString("en-GB", {
 												day: "2-digit",
 												month: "short",
 												year: "numeric",
@@ -265,8 +257,7 @@ function PaginationLink({
 
 function SourceTag({ source }: { source: string }) {
 	const styles: Record<string, string> = {
-		"contact-page":
-			"bg-emerald-100 text-emerald-800",
+		"contact-page": "bg-emerald-100 text-emerald-800",
 	};
 	const defaultStyle = "bg-sky-100 text-sky-800";
 	const display = source.startsWith("service-page:")

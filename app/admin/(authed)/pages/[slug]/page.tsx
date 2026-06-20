@@ -12,6 +12,7 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db } from "../../../../../db";
 import { pages as pagesTable } from "../../../../../db/schema";
+import { ZONES } from "../../../../_lib/zones";
 import { PageEditForm } from "./edit-form";
 
 type RouteParams = { slug: string };
@@ -70,6 +71,7 @@ export default async function AdminPageEdit({
 					showInNav: row.showInNav,
 					body: (row.body ?? {}) as Record<string, unknown>,
 				}}
+				zones={ZONES[slug] ?? []}
 			/>
 		</div>
 	);

@@ -42,10 +42,7 @@ type ContactPayload = {
  * addresses. Resend accepts `to` as either a string or a string[]; we always
  * pass an array so the same code path works for one or many recipients.
  */
-function parseEmailList(
-	raw: string | undefined,
-	fallback: string[],
-): string[] {
+function parseEmailList(raw: string | undefined, fallback: string[]): string[] {
 	const source = raw ?? fallback.join(",");
 	const list = source
 		.split(",")
@@ -229,10 +226,7 @@ export async function POST(request: Request) {
 			messageLength: payload.message?.length ?? 0,
 		});
 	} catch (e) {
-		console.error(
-			"[contact] DB insert failed; continuing with email send",
-			e,
-		);
+		console.error("[contact] DB insert failed; continuing with email send", e);
 	}
 
 	// Send via Resend
@@ -258,7 +252,11 @@ export async function POST(request: Request) {
 	const subject = `New contact form submission from ${payload.name}`;
 
 	try {
-		console.log("[contact] sending", { from: FROM_EMAIL, to: TO_EMAILS, subject });
+		console.log("[contact] sending", {
+			from: FROM_EMAIL,
+			to: TO_EMAILS,
+			subject,
+		});
 
 		// Send to the configured recipient list. Resend accepts a single
 		// address or an array; the env var can be a single email or a

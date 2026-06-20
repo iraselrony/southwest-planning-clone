@@ -3,7 +3,7 @@
 // URL: /privacy-cookie-policy
 import { readFile } from 'node:fs/promises';
 import DOMPurify from 'isomorphic-dompurify';
-import { buildHeadFromHtml, extractBodyInner } from '../../_lib/page';
+import { buildHeadFromHtml, extractBodyInner, getPageBody, injectBlocks } from '../../_lib/page';
 import { getPageSeo } from '../../_lib/seo';
 
 const SOURCE = 'execution-plan/raw-mirror/www.southwestplanningconsultancy.co.uk/privacy-cookie-policy.html';
@@ -28,8 +28,11 @@ export async function generateMetadata() {
 export default async function Page() {
   let body = '';
   try {
-    const raw = await readFile(SOURCE, 'utf-8');
-    body = extractBodyInner(raw, PAGE_URL);
+    const [raw, pageBody] = await Promise.all([
+      readFile(SOURCE, 'utf-8'),
+      getPageBody(PAGE_URL),
+    ]);
+    body = injectBlocks(extractBodyInner(raw, PAGE_URL), PAGE_URL, pageBody);
   } catch (e) {
     body = '<p>Failed to load mirrored content.</p>';
   }
