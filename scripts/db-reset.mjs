@@ -14,10 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 
 if (!process.env.DATABASE_URL) {
-	const envLocal = await readFile(
-		resolve(projectRoot, ".env.local"),
-		"utf-8",
-	);
+	const envLocal = await readFile(resolve(projectRoot, ".env.local"), "utf-8");
 	for (const line of envLocal.split("\n")) {
 		const m = line.match(/^([A-Z_]+)\s*=\s*(.+?)\s*$/);
 		if (m && !process.env[m[1]]) {

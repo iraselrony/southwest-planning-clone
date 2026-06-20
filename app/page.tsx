@@ -10,10 +10,10 @@ const SOURCE = 'execution-plan/raw-mirror/www.southwestplanningconsultancy.co.uk
 const PAGE_URL = '/';
 
 export const dynamic = 'force-static';
-export const revalidate = false;
+export const revalidate = 60;
 
 export async function generateMetadata() {
-  const seo = getPageSeo(PAGE_URL);
+  const seo = await getPageSeo(PAGE_URL);
   try {
     const raw = await readFile(SOURCE, 'utf-8');
     return buildHeadFromHtml(raw, PAGE_URL, seo);

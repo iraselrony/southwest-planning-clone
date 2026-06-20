@@ -43,9 +43,7 @@ export default async function AdminHome() {
 		<div>
 			<div className="mb-8 flex items-start justify-between">
 				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">
-						Dashboard
-					</h1>
+					<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 					<p className="mt-1 text-sm text-neutral-600">
 						Welcome back. Pick a section to manage.
 					</p>
@@ -73,9 +71,7 @@ export default async function AdminHome() {
 					>
 						<div className="mb-2 text-2xl">{s.emoji}</div>
 						<h2 className="text-base font-semibold">{s.title}</h2>
-						<p className="mt-1 text-sm text-neutral-600">
-							{s.description}
-						</p>
+						<p className="mt-1 text-sm text-neutral-600">{s.description}</p>
 						{s.status === "coming-soon" ? (
 							<p className="mt-3 text-xs text-neutral-400">
 								Coming in a later build.
@@ -93,13 +89,10 @@ export default async function AdminHome() {
 			</div>
 
 			<div className="mt-8 rounded-lg border border-neutral-200 bg-white p-5 text-sm text-neutral-600">
-				<strong className="font-semibold text-neutral-900">
-					Build status
-				</strong>
-				: Day 1 of the 6-day custom dashboard build is complete —
-				auth, DB schema, and the magic-link login flow are working.
-				Pages, Services, Settings, and Submissions UIs land in
-				Days 2-5.
+				<strong className="font-semibold text-neutral-900">Build status</strong>
+				: Day 1 of the 6-day custom dashboard build is complete — auth, DB
+				schema, and the magic-link login flow are working. Pages, Services,
+				Settings, and Submissions UIs land in Days 2-5.
 			</div>
 		</div>
 	);

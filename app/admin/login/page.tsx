@@ -34,32 +34,30 @@ export default async function LoginPage({ searchParams }: SearchParams) {
 	return (
 		<div className="mx-auto mt-12 max-w-md">
 			<div className="rounded-lg border border-neutral-200 bg-white p-8 shadow-sm">
-				<h1 className="text-xl font-semibold tracking-tight">
-					Sign in
-				</h1>
+				<h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
 				<p className="mt-1 text-sm text-neutral-600">
 					Enter your email to receive a one-click sign-in link.
 				</p>
 
 				{params.check === "email" && (
 					<div className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-						Check your email. We sent a sign-in link to the address
-						you entered. The link expires in 24 hours.
+						Check your email. We sent a sign-in link to the address you entered.
+						The link expires in 24 hours.
 					</div>
 				)}
 
 				{params.error === "forbidden" && (
 					<div className="mt-5 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-						That email isn't on the admin allowlist. The single
-						admin is <strong>{ADMIN_EMAIL}</strong>. If that's
-						you, contact the project owner to be added.
+						That email isn't on the admin allowlist. The single admin is{" "}
+						<strong>{ADMIN_EMAIL}</strong>. If that's you, contact the project
+						owner to be added.
 					</div>
 				)}
 
 				{params.error === "signin" && (
 					<div className="mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
-						Something went wrong. Try again, or contact the
-						project owner if the problem persists.
+						Something went wrong. Try again, or contact the project owner if the
+						problem persists.
 					</div>
 				)}
 
@@ -106,8 +104,7 @@ export default async function LoginPage({ searchParams }: SearchParams) {
 			</div>
 
 			<p className="mt-6 text-center text-xs text-neutral-500">
-				Only the configured admin can sign in. Magic links expire in
-				24 hours.
+				Only the configured admin can sign in. Magic links expire in 24 hours.
 			</p>
 		</div>
 	);

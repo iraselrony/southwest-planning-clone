@@ -46,7 +46,8 @@ const SITE = {
 	socialLinks: {
 		instagram: "https://www.instagram.com/southwestplanningconsultancy/",
 		twitter: "https://twitter.com/planning_swest",
-		linkedin: "https://www.linkedin.com/company/southwest-planning-consultancy/",
+		linkedin:
+			"https://www.linkedin.com/company/southwest-planning-consultancy/",
 		facebook: "https://www.facebook.com/swplanningconsultancy",
 	},
 	registration: {
@@ -66,7 +67,11 @@ const SERVICES = [
 		order: 2,
 	},
 	{ slug: "retail", name: "Retail Planning Consultants", order: 3 },
-	{ slug: "leisure-development", name: "Leisure Development Planning", order: 4 },
+	{
+		slug: "leisure-development",
+		name: "Leisure Development Planning",
+		order: 4,
+	},
 	{ slug: "strategic-land", name: "Strategic Land Promotion", order: 5 },
 	{ slug: "employment-land", name: "Employment Land Planning", order: 6 },
 	{
@@ -161,10 +166,7 @@ const SERVICE_DESCRIPTIONS = {
 
 if (!process.env.DATABASE_URL) {
 	// Load .env.local manually since this is a Node script, not Next.
-	const envLocal = await readFile(
-		resolve(projectRoot, ".env.local"),
-		"utf-8",
-	);
+	const envLocal = await readFile(resolve(projectRoot, ".env.local"), "utf-8");
 	for (const line of envLocal.split("\n")) {
 		const m = line.match(/^([A-Z_]+)\s*=\s*(.+?)\s*$/);
 		if (m && !process.env[m[1]]) {
