@@ -25,6 +25,19 @@ const ASSET_FILENAME_REWRITES: Array<[RegExp, string]> = [
 ];
 
 /**
+ * Remove the "Webdesign by GFIVEDESIGN" credit from the footer. The original
+ * site is built on Webflow with a backlink to the designer's site. The new
+ * site should not carry that credit. Strips the entire link element
+ * (including the leading "Webdesign by " text) so no orphan markup remains.
+ */
+function removeFooterCredits(html: string): string {
+	return html.replace(
+		/\s*Webdesign by\s*<a [^>]*href="https:\/\/gfivedesign\.co\.uk\/"[^>]*>GFIVEDESIGN<\/a>/gi,
+		"",
+	);
+}
+
+/**
  * Replace wget-emitted host-relative paths (`../cdn.prod.website-files.com/...`)
  * with root-absolute paths (`/cdn.prod.website-files.com/...`) so they resolve
  * correctly regardless of which URL the page is served from.
@@ -226,28 +239,57 @@ export function extractBodyInner(html: string, pageUrl: string = "/"): string {
 	$body.find("script").remove();
 	$body.find("noscript").remove();
 	$body.find('link[rel="stylesheet"]').remove();
+
+	// Tag the contact form(s) with `data-contact-form` so the client-side
+	// interceptor in public/contact-form.js can find them. The value is the
+	// page slug, which the email pipeline uses as the "source" field.
+	const isContactPage = pageUrl === "/contact";
+	const isServicePage = pageUrl.startsWith("/services/");
+	const sourceTag = isContactPage
+		? "contact-page"
+		: isServicePage
+			? `service-page:${pageUrl.replace(/^\/services\//, "")}`
+			: `other:${pageUrl}`;
+	$body.find('form.form, form.w-form').each((_, el) => {
+		$(el).attr("data-contact-form", sourceTag);
+	});
+
 	const inner = $body.html() ?? "";
 	return revealWebflowAnimations(
-		absolutizeAssetPaths(
-			rewriteInternalLinks(fixBrokenHeroBackgrounds(inner), pageUrl),
+		removeFooterCredits(
+			absolutizeAssetPaths(
+				rewriteInternalLinks(fixBrokenHeroBackgrounds(inner), pageUrl),
+			),
 		),
 	);
 }
 
 /**
  * Extract <head> metadata for Next.js generateMetadata.
- * Returns title, description, canonical, robots, OG, Twitter, JSON-LD.
+ *
+ * Pulls everything the original Webflow HTML provides: title, description,
+ * canonical, robots, OG tags, Twitter card. The optional `seo` argument
+ * overrides the title and description with values from `getPageSeo()`, which
+ * is the source of truth for SEO content. The Payload phase replaces
+ * `getPageSeo()` with a Payload Local API lookup; the shape of the override
+ * stays the same so the page components don't need to change.
+ *
+ * `pageUrl` is used to construct a self-referential canonical URL pointing
+ * at the production domain (the original Webflow site didn't set canonical
+ * tags on most pages).
  */
 export function buildHeadFromHtml(
 	html: string,
-	_fallbackUrl: string,
+	pageUrl: string,
+	seo?: { title: string; description: string },
 ): Metadata {
 	const $ = cheerio.load(html);
 
-	const title = $("head > title").first().text().trim() || undefined;
-	const description =
+	const htmlTitle = $("head > title").first().text().trim() || undefined;
+	const htmlDescription =
 		$('head > meta[name="description"]').attr("content") || undefined;
-	const canonical = $('head > link[rel="canonical"]').attr("href") || undefined;
+	const htmlCanonical =
+		$('head > link[rel="canonical"]').attr("href") || undefined;
 	const robots = $('head > meta[name="robots"]').attr("content") || undefined;
 
 	const og: Record<string, string> = {};
@@ -266,32 +308,43 @@ export function buildHeadFromHtml(
 		if (k && v) twitter[k] = v;
 	});
 
+	// Title and description come from the SEO data (the source of truth).
+	// Fall back to the original HTML if no override is provided, so that
+	// adding a new page without SEO data still renders a sensible <title>.
+	const title = seo?.title ?? htmlTitle;
+	const description = seo?.description ?? htmlDescription;
+
+	// Canonical: prefer the HTML's value, otherwise construct one from pageUrl.
+	const PRODUCTION_BASE = "https://www.southwestplanningconsultancy.co.uk";
+	const canonical =
+		htmlCanonical ?? `${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`;
+
 	const metadata: Metadata = {
 		...(title ? { title } : {}),
 		...(description ? { description } : {}),
 		...(robots ? { robots } : {}),
-		alternates: canonical ? { canonical } : undefined,
-		openGraph: Object.keys(og).length
-			? {
-					title: og.title,
-					description: og.description,
-					url: og.url,
-					siteName: og.site_name,
-					images: og.image ? [{ url: og.image }] : undefined,
-					type: (og.type as "website" | "article" | undefined) ?? "website",
-				}
-			: undefined,
-		twitter: Object.keys(twitter).length
-			? {
-					...(twitter.card === "summary" ||
-					twitter.card === "summary_large_image"
-						? { card: twitter.card }
-						: {}),
-					...(twitter.title ? { title: twitter.title } : {}),
-					...(twitter.description ? { description: twitter.description } : {}),
-					...(twitter.image ? { images: [twitter.image] } : {}),
-				}
-			: undefined,
+		alternates: { canonical },
+		openGraph: {
+			title: seo?.title ?? og.title,
+			description: seo?.description ?? og.description,
+			url: `${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`,
+			siteName: og.site_name ?? "South West Planning Consultancy",
+			images: og.image ? [{ url: og.image }] : undefined,
+			type: (og.type as "website" | "article" | undefined) ?? "website",
+		},
+		twitter: {
+			...(twitter.card === "summary" ||
+			twitter.card === "summary_large_image"
+				? { card: twitter.card }
+				: { card: "summary_large_image" }),
+			title: seo?.title ?? twitter.title,
+			description: seo?.description ?? twitter.description,
+			images: og.image
+				? [og.image]
+				: twitter.image
+					? [twitter.image]
+					: undefined,
+		},
 		other: {
 			"theme-color": "#000000",
 		},

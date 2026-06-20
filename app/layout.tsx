@@ -71,6 +71,12 @@ export default function RootLayout({
 					integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
 					crossOrigin="anonymous"
 				/>
+				{/* Contact form interceptor. The two Webflow-style forms
+					(/contact and /services/*) submit via method="get" by default;
+					this script captures the submit event, POSTs the data to
+					/api/contact as JSON, and routes the response into the
+					existing .w-form-done / .w-form-fail divs. */}
+				<Script src="/contact-form.js" strategy="afterInteractive" />
 				{/* Webflow runtime — three chunks, hosted at the original CDN.
             These power the slider, scroll animations, and nav. */}
 				<Script

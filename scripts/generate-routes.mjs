@@ -73,6 +73,7 @@ for (const { url, file } of rows) {
 import { readFile } from 'node:fs/promises';
 import DOMPurify from 'isomorphic-dompurify';
 import { buildHeadFromHtml, extractBodyInner } from '${libImport}';
+import { getPageSeo } from '${libImport.replace(/_lib\/page$/, '_lib/seo')}';
 
 const SOURCE = '${relMirror}';
 const PAGE_URL = '${url}';
@@ -81,11 +82,15 @@ export const dynamic = 'force-static';
 export const revalidate = false;
 
 export async function generateMetadata() {
+  const seo = getPageSeo(PAGE_URL);
   try {
     const raw = await readFile(SOURCE, 'utf-8');
-    return buildHeadFromHtml(raw, PAGE_URL);
+    return buildHeadFromHtml(raw, PAGE_URL, seo);
   } catch {
-    return {};
+    return {
+      title: seo.title,
+      description: seo.description,
+    };
   }
 }
 
@@ -117,6 +122,7 @@ if (homeRow) {
 import { readFile } from 'node:fs/promises';
 import DOMPurify from 'isomorphic-dompurify';
 import { buildHeadFromHtml, extractBodyInner } from './_lib/page';
+import { getPageSeo } from './_lib/seo';
 
 const SOURCE = 'execution-plan/raw-mirror/www.southwestplanningconsultancy.co.uk/${homeRow.file}';
 const PAGE_URL = '/';
@@ -125,11 +131,15 @@ export const dynamic = 'force-static';
 export const revalidate = false;
 
 export async function generateMetadata() {
+  const seo = getPageSeo(PAGE_URL);
   try {
     const raw = await readFile(SOURCE, 'utf-8');
-    return buildHeadFromHtml(raw, PAGE_URL);
+    return buildHeadFromHtml(raw, PAGE_URL, seo);
   } catch {
-    return {};
+    return {
+      title: seo.title,
+      description: seo.description,
+    };
   }
 }
 
