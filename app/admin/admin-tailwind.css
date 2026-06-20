@@ -1,0 +1,8 @@
+/**
+ * Tailwind entry for the /admin/* route group. Only loaded inside
+ * the admin layout (app/admin/layout.tsx). The public site's
+ * globals.css is untouched and still controls the marketing pages.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
