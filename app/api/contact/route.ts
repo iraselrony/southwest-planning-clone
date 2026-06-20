@@ -245,7 +245,12 @@ export async function POST(request: Request) {
 		if (error) {
 			console.error("[contact] Resend error", error);
 			return NextResponse.json(
-				{ ok: false, error: "Failed to send email", receivedAt },
+				{
+					ok: false,
+					error: "Failed to send email",
+					debug: { from: FROM_EMAIL, to: TO_EMAILS, resendError: error.message },
+					receivedAt,
+				},
 				{ status: 502 },
 			);
 		}
