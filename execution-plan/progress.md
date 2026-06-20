@@ -125,3 +125,35 @@ See `screenshots/diff/diff-report.md` for the full table. Summary at the time of
 | ⚠️ 15–35% | `/` (slider state), `/contact` (form) | 24%, 36% |
 
 The "warnings" are noise from animation states, broken hero URLs, and form structure — not structural content differences. **This snapshot is stale** — the broken-hero fix (commit `383c59c`) should bring the 14 service pages into the <5% range, but the visual-diff wasn't re-run after the fix. The Payload phase will close the rest by replacing the `dangerouslySetInnerHTML` strings with proper components.
+
+## Phase 2: Config refactor (✅ done, commit `865f47f`)
+
+Centralised all site-specific data (company name, domain, contact, services, page SEO) into `config/` so the project can be duplicated for a new client in 2-3 hours by editing three config files. The app code reads from config; no more hardcoded "South West" or `southwestplanningconsultancy.co.uk` in `app/`.
+
+**New files:**
+
+- `config/site.ts` — company name, domain, contact email, address, phones, social links, registration, default OG image, admin email
+- `config/services.ts` — 14 service entries (`{ slug, name, order }`)
+- `config/pages.ts` — 18 page SEO entries (`{ title, description, showInNav, isService }`). Also re-exports `getPageSeo()`, `KNOWN_PAGE_SLUGS`, `DEFAULT_SEO`, `PAGE_SEO`.
+- `execution-plan/duplicate-for-new-client.md` — step-by-step playbook for cloning this project for a new client
+
+**Refactored:**
+
+- `app/_lib/seo.ts` — thin re-export wrapper, API surface unchanged
+- `app/_lib/page.ts` — reads `SITE.productionUrl` / `SITE.companyName`; `KNOWN_PAGES` built from `KNOWN_PAGE_SLUGS` instead of 18 hardcoded paths
+- `app/api/contact/route.ts` — default TO email from `SITE.contactEmail`
+- `app/sitemap.ts` — `BASE` from `SITE.productionUrl`
+- `app/layout.tsx` — `metadataBase` + default title/description from `SITE`
+- `app/robots.ts` — sitemap URL from `SITE.productionUrl`
+
+**Verification:** typecheck clean, build clean (23 static pages), `verify.mjs` 161/161 still pass, rendered SEO byte-identical to pre-refactor on all 18 routes.
+
+**Snapshot for fallback (commit `6d693dd`):** a frozen copy of the project at this commit is at `https://github.com/iraselrony/southwest-planning-clone-no-backend` (tagged `pre-backend-baseline`). If we decide the custom dashboard is not the right call, we can use that snapshot to try Sanity or Payload without reverting this repo.
+
+**Client has a 2nd site:** see `execution-plan/duplicate-for-new-client.md`. The config layer means duplicating for the 2nd client is a 2-3 hour config swap, not a 5-6 day rebuild. Architecture: each client gets its own Vercel project + Neon DB; backend bug fixes are ported between repos via `execution-plan/backend-changelog.md` (TBD in phase 3).
+
+## Phase 3: Custom dashboard backend (🚧 in progress)
+
+See `execution-plan/backend-plan.md` for the full plan. Stack: shadcn/ui + Auth.js v5 (magic-link) + Drizzle ORM + Neon Postgres + Tiptap + Vercel Blob. 5-6 day build, broken into 6 daily chunks.
+
+**Why custom (not Payload/Sanity/Tina):** best admin UX, no vendor lock-in, matches the firm's brand exactly, comparable build time. See `backend-plan.md` "Why Custom" section for the full rationale.
