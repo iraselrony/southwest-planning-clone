@@ -1,26 +1,24 @@
 // Contact form endpoint. Accepts POST from the two Webflow-style forms
-// (one on /contact, one on each /services/* page) and forwards the
-// submission as an email via the Resend API.
+// (one on /contact, one on each /services/* page) and:
+//   1. Validates and normalises the form fields
+//   2. Sends an email via the Resend API
+//   3. Persists the submission to Payload's contactSubmissions collection
 //
 // Field names accept both naming conventions used in the Webflow HTML:
 //   Contact page form:    First-name / Last-name / Email / Phone / Message
 //   Service page forms:   First-name-2 / Last-name-2 / Email-2 / Phone-2 / Message-2
 //
-// Required env vars (set in Vercel project settings):
-//   RESEND_API_KEY        Resend API key. Required.
+// Required env vars:
+//   RESEND_API_KEY        Resend API key. Required for email.
 //   CONTACT_TO_EMAIL      Comma-separated destination address(es).
-//                         Default: info@southwestplanningconsultancy.co.uk
-//                         Example: "info@southwestplanningconsultancy.co.uk, partner@example.com"
-//   CONTACT_FROM_EMAIL    From address on the email. Must be on a Resend-verified
-//                         domain once you upgrade / verify. Default: onboarding@resend.dev
-//                         (the Resend-provided address, valid for the free tier
-//                         until you verify your own domain).
-//
-// In the Payload phase, this route also inserts into the `contactSubmissions`
-// collection via Payload's Local API so the firm has a record of every enquiry.
+//   CONTACT_FROM_EMAIL    From address on the email.
+//   PAYLOAD_SECRET        Required for the Payload Local API (used to insert).
+//   DATABASE_URL          Required for the Payload Local API.
 
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { getPayload } from "payload";
+import config from "@payload-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,11 +32,6 @@ type ContactPayload = {
 	[k: string]: unknown;
 };
 
-/**
- * Parse a comma-separated env var into a list of trimmed, non-empty
- * addresses. Resend accepts `to` as either a string or a string[]; we always
- * pass an array so the same code path works for one or many recipients.
- */
 function parseEmailList(
 	raw: string | undefined,
 	fallback: string[],
@@ -142,6 +135,41 @@ function buildEmailBody(
 	return { text, html };
 }
 
+/**
+ * Persist the submission to Payload's contactSubmissions collection.
+ * Best-effort — failures are logged but do not fail the HTTP response,
+ * because the email is the user-facing success signal.
+ */
+async function persistSubmission(
+	payload: ContactPayload,
+	pageUrl: string,
+): Promise<{ ok: boolean; submissionId?: string; error?: string }> {
+	try {
+		const payloadClient = await getPayload({ config });
+		const subject = `Contact form: ${payload.name || "(no name)"} — ${payload.source || pageUrl}`;
+		const created = await payloadClient.create({
+			collection: "contact-submissions",
+			data: {
+				subject,
+				name: payload.name || "",
+				email: payload.email || "",
+				phone: payload.phone || "",
+				message: payload.message || "",
+				source: payload.source || pageUrl,
+				submittedAt: new Date().toISOString(),
+			},
+			// Don't run access checks for this internal write — the route is
+			// already gated on validation.
+			overrideAccess: true,
+		});
+		return { ok: true, submissionId: created.id as string };
+	} catch (e) {
+		const msg = e instanceof Error ? e.message : String(e);
+		console.error("[contact] payload insert failed", msg);
+		return { ok: false, error: msg };
+	}
+}
+
 export async function POST(request: Request) {
 	const pageUrl =
 		request.headers.get("referer") ||
@@ -178,7 +206,6 @@ export async function POST(request: Request) {
 	const payload = normalisePayload(raw);
 	const receivedAt = new Date().toISOString();
 
-	// Validation
 	const errors: string[] = [];
 	if (!payload.name) errors.push("name is required");
 	if (!payload.email) errors.push("email is required");
@@ -191,8 +218,6 @@ export async function POST(request: Request) {
 		return NextResponse.json({ ok: false, errors }, { status: 400 });
 	}
 
-	// Persist to console (and, in the Payload phase, to the contactSubmissions
-	// collection). The console log is the audit trail during this phase.
 	console.log("[contact] submission received", {
 		receivedAt,
 		pageUrl,
@@ -203,11 +228,10 @@ export async function POST(request: Request) {
 		messageLength: payload.message?.length ?? 0,
 	});
 
-	// Send via Resend
 	const apiKey = process.env.RESEND_API_KEY;
 	if (!apiKey) {
 		console.error(
-			"[contact] RESEND_API_KEY is not set \u2014 email not sent. Set it in Vercel env vars (or .env.local for dev).",
+			"[contact] RESEND_API_KEY is not set — email not sent. Set it in Vercel env vars (or .env.local for dev).",
 		);
 		return NextResponse.json(
 			{
@@ -225,14 +249,11 @@ export async function POST(request: Request) {
 
 	const subject = `New contact form submission from ${payload.name}`;
 
+	let emailOk = false;
+	let emailId: string | undefined;
 	try {
 		console.log("[contact] sending", { from: FROM_EMAIL, to: TO_EMAILS, subject });
 
-		// Send to the configured recipient list. Resend accepts a single
-		// address or an array; the env var can be a single email or a
-		// comma-separated list. (When the firm upgrades to a verified
-		// domain, add `info@southwestplanningconsultancy.co.uk` to the list
-		// and the send will go to both addresses.)
 		const { data, error } = await resend.emails.send({
 			from: FROM_EMAIL,
 			to: TO_EMAILS,
@@ -251,7 +272,8 @@ export async function POST(request: Request) {
 		}
 
 		console.log("[contact] email sent", { id: data?.id, to: TO_EMAILS });
-		return NextResponse.json({ ok: true, id: data?.id, receivedAt });
+		emailOk = true;
+		emailId = data?.id;
 	} catch (e) {
 		console.error("[contact] Resend exception", e);
 		return NextResponse.json(
@@ -259,6 +281,18 @@ export async function POST(request: Request) {
 			{ status: 500 },
 		);
 	}
+
+	// Persist to Payload after the email send succeeds. If the email failed
+	// we return early above, so reaching this point means emailOk === true.
+	const persist = await persistSubmission(payload, pageUrl);
+
+	return NextResponse.json({
+		ok: emailOk,
+		id: emailId,
+		receivedAt,
+		submissionId: persist.submissionId,
+		persisted: persist.ok,
+	});
 }
 
 export async function GET() {

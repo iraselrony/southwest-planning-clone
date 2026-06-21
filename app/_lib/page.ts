@@ -1,5 +1,9 @@
 import * as cheerio from "cheerio";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { Metadata } from "next";
+import { renderBlock } from "./blocks";
+import type { Page, Service } from "./types";
 
 const CDN_HOSTS = [
 	"cdn.prod.website-files.com",
@@ -71,8 +75,7 @@ function absolutizeAssetPaths(html: string): string {
  * Strip Webflow scroll-animation initial states so content is visible by
  * default. Webflow SSR-renders elements with `style="opacity:0"` or
  * `style="transform: translate3d(0, 80px, 0)"` and relies on its own JS to
- * reveal them on scroll. The Payload phase will replace this with proper
- * React components that handle animation through their own lifecycle.
+ * reveal them on scroll.
  */
 function revealWebflowAnimations(html: string): string {
 	// Force opacity to 1 on every element that has opacity:0 inline
@@ -223,6 +226,45 @@ function rewriteInternalLinks(html: string, pageUrl: string): string {
 }
 
 /**
+ * Inject Payload block content into marked zones. For each
+ * `<div data-payload-zone="<id>">…</div>` in the marked HTML, replace
+ * the inner HTML with the rendered block content from the page's `body`
+ * array. If no Payload content exists for the zone, leave the original
+ * Webflow content in place (the `data-payload-zone-fallback="1"`
+ * attribute is the explicit signal that the renderer may fall back).
+ *
+ * `referencedServices` is a slug→service map used by the `serviceCards`
+ * block to render the service card grid.
+ */
+function injectZoneContent(
+	html: string,
+	page: Page | undefined,
+	referencedServices: Record<string, Service>,
+): string {
+	if (!page?.body || page.body.length === 0) return html;
+	const zoneMap: Record<string, { blockType: string; [k: string]: unknown }> = {};
+	for (const item of page.body) {
+		if (item?.zoneId && item.block) {
+			zoneMap[item.zoneId] = item.block as { blockType: string; [k: string]: unknown };
+		}
+	}
+	if (Object.keys(zoneMap).length === 0) return html;
+
+	const $ = cheerio.load(html, { xml: false });
+	$("[data-payload-zone]").each((_, el) => {
+		const $el = $(el);
+		const zoneId = $el.attr("data-payload-zone");
+		if (!zoneId) return;
+		const block = zoneMap[zoneId];
+		if (!block) return; // no Payload content for this zone — keep the fallback
+		const html2 = renderBlock(block, { referencedServices });
+		$el.html(html2);
+		$el.removeAttr("data-payload-zone-fallback");
+	});
+	return $.html();
+}
+
+/**
  * Extract just the inner HTML of <body> from a full HTML document.
  * Strips <script> tags (we re-inject them via Next.js Script in the layout).
  * Strips <link rel="stylesheet"> (re-injected by the layout).
@@ -231,8 +273,16 @@ function rewriteInternalLinks(html: string, pageUrl: string): string {
  * `pageUrl` is the canonical URL of the page being rendered (e.g. "/contact",
  * "/services/housing"). It is used to resolve relative `../foo.html` nav
  * links back to clean Next.js paths.
+ *
+ * `payloadData` is the optional Payload-backed content for this page. When
+ * supplied, the body extract injects the block content into marked zones
+ * (see `injectZoneContent`).
  */
-export function extractBodyInner(html: string, pageUrl: string = "/"): string {
+export function extractBodyInner(
+	html: string,
+	pageUrl: string = "/",
+	payloadData?: { page?: Page; referencedServices?: Record<string, Service> },
+): string {
 	const $ = cheerio.load(html);
 	const $body = $("body").first();
 	if ($body.length === 0) return "";
@@ -255,10 +305,15 @@ export function extractBodyInner(html: string, pageUrl: string = "/"): string {
 	});
 
 	const inner = $body.html() ?? "";
+	const withZones = injectZoneContent(
+		inner,
+		payloadData?.page,
+		payloadData?.referencedServices || {},
+	);
 	return revealWebflowAnimations(
 		removeFooterCredits(
 			absolutizeAssetPaths(
-				rewriteInternalLinks(fixBrokenHeroBackgrounds(inner), pageUrl),
+				rewriteInternalLinks(fixBrokenHeroBackgrounds(withZones), pageUrl),
 			),
 		),
 	);
@@ -269,10 +324,9 @@ export function extractBodyInner(html: string, pageUrl: string = "/"): string {
  *
  * Pulls everything the original Webflow HTML provides: title, description,
  * canonical, robots, OG tags, Twitter card. The optional `seo` argument
- * overrides the title and description with values from `getPageSeo()`, which
- * is the source of truth for SEO content. The Payload phase replaces
- * `getPageSeo()` with a Payload Local API lookup; the shape of the override
- * stays the same so the page components don't need to change.
+ * overrides the title and description with values from `getPageSeo()`.
+ * The optional `ogImageUrl` and `canonical` arguments override the OG
+ * image and canonical URL with Payload-backed values.
  *
  * `pageUrl` is used to construct a self-referential canonical URL pointing
  * at the production domain (the original Webflow site didn't set canonical
@@ -282,6 +336,7 @@ export function buildHeadFromHtml(
 	html: string,
 	pageUrl: string,
 	seo?: { title: string; description: string },
+	overrides?: { ogImageUrl?: string; canonical?: string },
 ): Metadata {
 	const $ = cheerio.load(html);
 
@@ -309,15 +364,15 @@ export function buildHeadFromHtml(
 	});
 
 	// Title and description come from the SEO data (the source of truth).
-	// Fall back to the original HTML if no override is provided, so that
-	// adding a new page without SEO data still renders a sensible <title>.
+	// Fall back to the original HTML if no override is provided.
 	const title = seo?.title ?? htmlTitle;
 	const description = seo?.description ?? htmlDescription;
+	const ogImageUrl = overrides?.ogImageUrl || og.image;
 
-	// Canonical: prefer the HTML's value, otherwise construct one from pageUrl.
+	// Canonical: Payload override > HTML value > constructed from pageUrl.
 	const PRODUCTION_BASE = "https://www.southwestplanningconsultancy.co.uk";
 	const canonical =
-		htmlCanonical ?? `${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`;
+		overrides?.canonical ?? htmlCanonical ?? `${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`;
 
 	const metadata: Metadata = {
 		...(title ? { title } : {}),
@@ -329,7 +384,7 @@ export function buildHeadFromHtml(
 			description: seo?.description ?? og.description,
 			url: `${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`,
 			siteName: og.site_name ?? "South West Planning Consultancy",
-			images: og.image ? [{ url: og.image }] : undefined,
+			images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
 			type: (og.type as "website" | "article" | undefined) ?? "website",
 		},
 		twitter: {
@@ -338,8 +393,8 @@ export function buildHeadFromHtml(
 				: { card: "summary_large_image" }),
 			title: seo?.title ?? twitter.title,
 			description: seo?.description ?? twitter.description,
-			images: og.image
-				? [og.image]
+			images: ogImageUrl
+				? [ogImageUrl]
 				: twitter.image
 					? [twitter.image]
 					: undefined,
@@ -353,3 +408,28 @@ export function buildHeadFromHtml(
 }
 
 export { absolutizeAssetPaths };
+
+/**
+ * Resolve a mirror HTML file path. Prefers the marked mirror (output of
+ * scripts/mark-zones.mjs) if it exists; falls back to the original raw
+ * mirror. The marked mirror is what the public-side zone injection reads
+ * from once it's been generated.
+ */
+export function resolveMirrorPath(relPath: string): string {
+	const cwd = process.cwd();
+	const marked = join(
+		cwd,
+		"execution-plan",
+		"raw-mirror-marked",
+		"www.southwestplanningconsultancy.co.uk",
+		relPath,
+	);
+	if (existsSync(marked)) return marked;
+	return join(
+		cwd,
+		"execution-plan",
+		"raw-mirror",
+		"www.southwestplanningconsultancy.co.uk",
+		relPath,
+	);
+}

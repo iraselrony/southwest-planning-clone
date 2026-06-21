@@ -1,21 +1,20 @@
 /**
  * Per-page SEO data: title (browser tab + OG) and description (meta + OG).
  *
- * For the Payload phase, this module is the single point of replacement.
- * The shape stays the same; the implementation swaps from a hardcoded map
- * to a Payload Local API lookup against a `pages` collection that has these
- * same fields. The page components don't need to change.
- *
- * The original Webflow HTML has only generic placeholders for the 14 service
- * pages (e.g. `<title>Southwest Planning Consultancy</title>` and no
- * description on most). This module gives every page a unique, descriptive
- * title and description so each service page ranks for its own keywords.
+ * The static map below is the source of truth at build time and the
+ * fallback at runtime if the Payload Local API is unreachable. The
+ * `getPageSeo(slug)` function is unchanged in signature; it now first
+ * tries a Payload lookup, then falls back to the hardcoded map, then to
+ * DEFAULT_SEO. Page components do not need to change.
  *
  * Title pattern: `{Service} | South West Planning Consultancy` for service
  * pages, `{Page Name} | South West Planning Consultancy` for the rest.
  * Description pattern: ~150 characters, includes the service area
  * ("South West") and the primary keyword for the page.
  */
+
+import { unstable_cache } from "next/cache";
+import { getPayloadClient } from "./payload-client";
 
 export type PageSeo = {
 	title: string;
@@ -122,16 +121,58 @@ const SEO: Record<string, PageSeo> = {
 };
 
 /**
- * Look up the SEO data for a page URL. Returns the default SEO if no
- * specific entry exists, so a new page never silently ends up with a blank
- * `<title>`.
- */
-export function getPageSeo(slug: string): PageSeo {
-	return SEO[slug] ?? DEFAULT_SEO;
-}
-
-/**
  * The complete list of page URLs that have explicit SEO data. Useful for
  * the sitemap and for asserting coverage in tests.
  */
 export const KNOWN_PAGE_SLUGS = Object.keys(SEO);
+
+/**
+ * Cached Payload lookup for a single page's SEO data. Cached by the page
+ * slug with a tag-based revalidation: edits in the admin call
+ * `revalidateTag('page:<slug>')` and the next request gets fresh data.
+ *
+ * Returns null if the DB is unreachable or the row doesn't exist (the
+ * caller falls back to the static map).
+ */
+const fetchSeoFromPayload = unstable_cache(
+	async (slug: string): Promise<PageSeo | null> => {
+		try {
+			const payload = await getPayloadClient();
+			const result = await payload.find({
+				collection: "pages",
+				where: { slug: { equals: slug } },
+				limit: 1,
+				depth: 0,
+			});
+			const doc = result.docs[0];
+			if (!doc) return null;
+			return {
+				title: doc.metaTitle || doc.title || "",
+				description: doc.metaDescription || "",
+			};
+		} catch {
+			return null;
+		}
+	},
+	["page-seo"],
+	{ tags: ["pages"], revalidate: 60 },
+);
+
+/**
+ * Look up the SEO data for a page URL. Tries Payload first, then the
+ * hardcoded map, then DEFAULT_SEO. The hardcoded map exists so that
+ * (1) the build still works before migrations are run, and (2) the site
+ * is never blank if the DB is down.
+ */
+export async function getPageSeo(slug: string): Promise<PageSeo> {
+	const fromDb = await fetchSeoFromPayload(slug);
+	if (fromDb && fromDb.title) {
+		return {
+			title: fromDb.title,
+			description: fromDb.description || DEFAULT_SEO.description,
+		};
+	}
+	const fromStatic = SEO[slug];
+	if (fromStatic) return fromStatic;
+	return DEFAULT_SEO;
+}
