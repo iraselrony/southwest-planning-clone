@@ -1,3 +1,5 @@
+import { withPayload } from "@payloadcms/next/withPayload";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	// `output: "standalone"` is honoured by Vercel at deploy time and is the
@@ -22,6 +24,14 @@ const nextConfig = {
 			{
 				protocol: "https",
 				hostname: "cdn.prod.website-files.com",
+			},
+			// Vercel Blob storage public hostname. Add the specific
+			// subdomain for the project's blob store, e.g.
+			// `<random>.public.blob.vercel-storage.com`. Wildcard is fine
+			// because the token gates access on the server side.
+			{
+				protocol: "https",
+				hostname: "*.public.blob.vercel-storage.com",
 			},
 		],
 	},
@@ -57,6 +67,14 @@ const nextConfig = {
 			return [{ source: htmlPath, destination: p }];
 		});
 	},
+	// The Payload admin and API need a larger body limit than the default
+	// 1 MB so that image uploads via the admin UI don't fail at the
+	// Next.js server boundary. 50 MB matches the limit in payload.config.ts.
+	experimental: {
+		serverActions: {
+			bodySizeLimit: "50mb",
+		},
+	},
 };
 
-export default nextConfig;
+export default withPayload(nextConfig, { devBundleServerPackages: false });
