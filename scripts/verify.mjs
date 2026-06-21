@@ -193,6 +193,20 @@ if (crawlFail === 0)
 		`no broken internal links (${crawlChecked} links checked across ${urls.length} pages)`,
 	);
 
+console.log("\n8. Payload admin routes are reachable");
+for (const path of ["/admin", "/admin/login"]) {
+	try {
+		const res = await fetch(`${BASE}${path}`, { redirect: "manual" });
+		if (res.status === 200 || res.status === 302 || res.status === 303) {
+			pass(`${path} → ${res.status}`);
+		} else {
+			fail(`${path} → ${res.status}`);
+		}
+	} catch (e) {
+		fail(`${path} → ${e.message}`);
+	}
+}
+
 const failed = checks.filter((c) => !c.ok).length;
 console.log(`\n${"=".repeat(60)}`);
 console.log(

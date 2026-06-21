@@ -51,6 +51,13 @@ for (const { url, file } of rows) {
 	const slug = url.replace(/^\//, "").replace(/\/$/, "");
 	if (!slug) continue;
 
+	// Service pages are now a catch-all at app/(routes)/services/[slug]/page.tsx.
+	// Skip them here; the catch-all handles lookup by params.slug.
+	if (url.startsWith("/services/")) {
+		console.log(`  - ${url} (handled by app/(routes)/services/[slug]/page.tsx)`);
+		continue;
+	}
+
 	// Build a folder path that mirrors the URL structure.
 	// /about-us            → app/(routes)/about-us/page.tsx
 	// /services/foo        → app/(routes)/services/foo/page.tsx
