@@ -2,6 +2,8 @@
 
 This document is the handoff contract for the agent that picks up after the frontend clone. The frontend phase produced a working Next.js site that visually matches the original; this phase wires it to a real CMS, real database, real media hosting, and ships it.
 
+**Update 2026-06-21:** The Payload backend is scaffolded on branch `feat/payload-cms`. The code, config, admin route group, collection definitions, seed scripts, asset migration, and verify scripts are in place. The remaining work is the user-action list in `progress.md` (create Neon project, create Blob store, set env vars, run migrations, seed data, push to GitHub, deploy to Vercel). See `backend-plan-payload.md` for the original plan; the implementation is in commits on `feat/payload-cms`.
+
 ## Status of the frontend phase (what's already done)
 
 The frontend phase is **complete**. Several items that the original `next-phase.md` listed as "to do" have already been done in the frontend phase — they're marked `[x]` below with a short note. The remaining work is the real Payload / Neon / Vercel Blob backend.
@@ -17,6 +19,19 @@ Done in the frontend phase (no longer needed in the Payload phase):
 - [x] **Internal `.html` link 404s** are fixed by `rewriteInternalLinks()`. Plus a **link-crawl check** in `scripts/verify.mjs` (check #7) catches any regression.
 - [x] **GitHub repo created and Vercel project linked**: <https://github.com/iraselrony/southwest-planning-clone> and `iraselrony-8320s-projects/southwest-planning-clone`. Auto-deploy on push to `main`.
 - [x] **Resend env vars set on Vercel** for production + preview: `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL`. The current `CONTACT_TO_EMAIL` is `iraselrony@gmail.com` (single recipient, free-tier) — when the user verifies their domain, change to the full list and the route will deliver to all recipients with no code change.
+
+Done in the Payload phase (branch `feat/payload-cms`):
+
+- [x] **Payload CMS 3 + Next.js 15 integration** at `app/(payload)/admin/[[...segments]]/` with `RootLayout` and the standard REST handler at `app/(payload)/api/[...slug]/route.ts`.
+- [x] **5 collections + 1 global**: `users` (single admin), `pages` (18 entries), `services` (14 entries), `media` (uploads to Vercel Blob), `contact-submissions` (form persistence), `site-settings` global (logo, address, phones, email, socials, footer text).
+- [x] **Postgres adapter** (`@payloadcms/db-postgres`) ready for Neon. Set `DATABASE_URL` + `DIRECT_URL`.
+- [x] **Vercel Blob storage** (`@payloadcms/storage-vercel-blob`) for media uploads. Set `BLOB_READ_WRITE_TOKEN`. A bulk-migration script (`scripts/migrate-assets-to-blob.mjs`) uploads the 70+ mirrored /public assets.
+- [x] **Block-based hybrid rendering**: Webflow HTML stays the visual source of truth. Payload block content is injected into `<div data-payload-zone="<id>">` markers via `extractBodyInner`. The `scripts/mark-zones.mjs` script generates the marked mirror output.
+- [x] **Catch-all service pages**: `app/(routes)/services/[slug]/page.tsx` replaces the 14 hardcoded folders. Adding a new service in the admin makes it appear at `/services/<slug>` automatically.
+- [x] **Contact form persistence**: `app/api/contact/route.ts` inserts a row into `contactSubmissions` after the Resend send. Best-effort (never fails the response).
+- [x] **Seed scripts**: `npm run seed:all` populates 18 pages + 14 services + site settings + initial zones.
+- [x] **Verify scripts**: `scripts/verify.mjs` adds an admin-route reachability check; `scripts/verify-payload.mjs` is a Payload-specific verifier.
+- [x] **Type-safe throughout**: `npx tsc --noEmit` passes with zero errors. Production `next build` succeeds.
 
 ## Source artifacts (read these first)
 

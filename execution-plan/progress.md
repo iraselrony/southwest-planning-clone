@@ -4,11 +4,26 @@
 
 100% pixel-faithful clone of <https://www.southwestplanningconsultancy.co.uk> as a Next.js 15 App Router frontend. Every original URL, SEO signal, and asset preserved. Contact forms wired to email. Backend (Payload CMS, Neon, Vercel Blob) deferred to a later phase.
 
-## Status: ✅ Frontend phase complete
+## Status: ✅ Frontend phase complete · ✅ Backend phase (Payload CMS) scaffolded
 
 All 18 pages route. Every internal `.html` link rewritten to clean URLs (verify.mjs check #7). 14 service-page hero images downloaded and rendering. Per-page SEO titles + descriptions set, GFIVEDESIGN footer credit removed, contact forms wired to Resend and delivering. Dev server runs. Production build succeeds with zero type errors. Deployed to Vercel at <https://southwest-planning-clone.vercel.app>. 161/161 verify checks pass. 18/18 Playwright smoke tests pass with 0 console errors and 0 4xx sub-resources.
 
-**Final commit on `main`:** `7d552ed`. See `execution-plan/README.md` for the live URL, GitHub repo, and Vercel project.
+**Branch:** `feat/payload-cms` (4 commits on top of frozen `main`). The `main` branch of the no-backend snapshot is unchanged at `2bf6062`. The active development is on `feat/payload-cms`. See `execution-plan/README.md` for the live URL, GitHub repo, and Vercel project.
+
+**Backend phase (Payload CMS 3) is scaffolded but not yet deployed.** The code, config, admin route group, collection definitions, seed scripts, asset migration, and verify scripts are all in place. The following user actions are still required before the backend is live in production:
+
+1. Create a Neon Postgres project and set `DATABASE_URL` + `DIRECT_URL` in `.env.local` and on Vercel.
+2. Create a Vercel Blob store and set `BLOB_READ_WRITE_TOKEN` in `.env.local` and on Vercel.
+3. Generate `PAYLOAD_SECRET` (`openssl rand -hex 32`) and set it in `.env.local` and on Vercel.
+4. Set `NEXT_PUBLIC_SERVER_URL` to the production URL.
+5. Push `feat/payload-cms` to the active GitHub repo (`iraselrony/southwest-planning-clone`).
+6. Trigger a redeploy on Vercel (or push a no-op commit — see Vercel env-var PATCH gotcha below).
+7. Run `npm run migrate` to create the Payload tables in Neon (runs once on first build if `push: false`).
+8. Run `npm run seed:all` to populate 18 pages, 14 services, site settings, and initial zones.
+9. Run `npm run migrate:assets` to bulk-upload the 70+ mirrored /public assets to Vercel Blob.
+10. Visit `/admin`, complete the first-run setup wizard, set the admin password.
+11. Edit a page's hero in the admin and verify the public site picks up the change.
+12. Submit the contact form and verify a row appears in `contactSubmissions`.
 
 ## Checklist
 
@@ -75,12 +90,12 @@ These are the remaining gaps between the frontend and the ideal target. None blo
 
 ### Out of scope (Payload / backend phase)
 
-- Real Payload collections, admin dashboard at `/admin`
-- Migrating assets from `public/` to Vercel Blob
-- Form submissions persistence (DB) — currently logs to console + sends via Resend; the Payload phase adds the `contactSubmissions` collection insert
-- Refactoring `dangerouslySetInnerHTML` pages into proper React components (per-section extraction)
-- Domain cutover: `www.southwestplanningconsultancy.co.uk` → Vercel
-- Production rename: `southwest-planning-clone` → `southwest-planning-consultancy` (and reconciling with the pre-existing private repo / Vercel project of the same name)
+- ~~Real Payload collections, admin dashboard at `/admin`~~ — **done in `feat/payload-cms`**
+- ~~Migrating assets from `public/` to Vercel Blob~~ — **script implemented; needs real `BLOB_READ_WRITE_TOKEN` to run**
+- ~~Form submissions persistence (DB) — currently logs to console + sends via Resend; the Payload phase adds the `contactSubmissions` collection insert~~ — **done in `feat/payload-cms`** (the `/api/contact` route now does `payload.create()` after the Resend send)
+- Refactoring `dangerouslySetInnerHTML` pages into proper React components (per-section extraction) — deferred to v2; the block-based hybrid is the v1 deliverable
+- Domain cutover: `www.southwestplanningconsultancy.co.uk` → Vercel — separate task, not in scope
+- Production rename: `southwest-planning-clone` → `southwest-planning-consultancy` (and reconciling with the pre-existing private repo / Vercel project of the same name) — separate task, not in scope
 
 ## Live state
 

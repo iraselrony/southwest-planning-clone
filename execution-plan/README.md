@@ -1,6 +1,6 @@
 # Project: Southwest Planning Consultancy — Frontend Clone
 
-A pixel-faithful Next.js 15 clone of [www.southwestplanningconsultancy.co.uk](https://www.southwestplanningconsultancy.co.uk), generated from a wget mirror. The frontend is complete and deployed; the backend (Payload CMS, Neon, Vercel Blob) is deferred to a later phase — see `next-phase.md`.
+A pixel-faithful Next.js 15 clone of [www.southwestplanningconsultancy.co.uk](https://www.southwestplanningconsultancy.co.uk), generated from a wget mirror. The frontend is complete and deployed. The Payload CMS 3 backend is scaffolded on branch `feat/payload-cms` — see `next-phase.md` for the deployment checklist.
 
 ## What this is
 
@@ -13,9 +13,9 @@ A pixel-faithful Next.js 15 clone of [www.southwestplanningconsultancy.co.uk](ht
 
 ## What this is NOT (yet)
 
-- Not a proper React component tree. Pages render mirrored HTML with 5 string-level transformations; structure is intentionally a string for the Payload refactor.
-- Not connected to a CMS. The contact form sends email but does not persist submissions to a database; the Payload phase adds a `contactSubmissions` collection insert.
-- Not the production domain. The site is deployed at `southwest-planning-clone.vercel.app`; the client domain cutover (`www.southwestplanningconsultancy.co.uk` → Vercel) is the Payload phase.
+- ~~Not a proper React component tree.~~ — The block-based hybrid keeps `dangerouslySetInnerHTML` rendering; the React component refactor is a v2 concern.
+- ~~Not connected to a CMS.~~ — Payload CMS 3 is scaffolded on branch `feat/payload-cms`; admin at `/admin`, 5 collections, 1 global, contact-submission persistence wired. Needs Neon + Vercel Blob to go live (see `next-phase.md`).
+- Not the production domain. The site is deployed at `southwest-planning-clone.vercel.app`; the client domain cutover (`www.southwestplanningconsultancy.co.uk` → Vercel) is still pending.
 - Not on a verified Resend domain. The current Resend API key only allows sending to the account owner's verified email (`iraselrony@gmail.com`); the route is already configured to support `info@southwestplanningconsultancy.co.uk` once the user verifies their domain on Resend.
 
 ## How to run
