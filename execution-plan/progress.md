@@ -4,26 +4,27 @@
 
 100% pixel-faithful clone of <https://www.southwestplanningconsultancy.co.uk> as a Next.js 15 App Router frontend. Every original URL, SEO signal, and asset preserved. Contact forms wired to email. Backend (Payload CMS, Neon, Vercel Blob) deferred to a later phase.
 
-## Status: ✅ Frontend phase complete · ✅ Backend phase (Payload CMS) scaffolded
+## Status: ✅ Frontend phase complete · ✅ Backend phase LIVE in production
 
 All 18 pages route. Every internal `.html` link rewritten to clean URLs (verify.mjs check #7). 14 service-page hero images downloaded and rendering. Per-page SEO titles + descriptions set, GFIVEDESIGN footer credit removed, contact forms wired to Resend and delivering. Dev server runs. Production build succeeds with zero type errors. Deployed to Vercel at <https://southwest-planning-clone.vercel.app>. 161/161 verify checks pass. 18/18 Playwright smoke tests pass with 0 console errors and 0 4xx sub-resources.
 
-**Branch:** `feat/payload-cms` (4 commits on top of frozen `main`). The `main` branch of the no-backend snapshot is unchanged at `2bf6062`. The active development is on `feat/payload-cms`. See `execution-plan/README.md` for the live URL, GitHub repo, and Vercel project.
+**Payload CMS 3 backend is live** at `https://southwest-planning-clone.vercel.app/admin` (login: `iraselrony@gmail.com`, password set via first-run wizard — see "Outstanding user actions" below).
 
-**Backend phase (Payload CMS 3) is scaffolded but not yet deployed.** The code, config, admin route group, collection definitions, seed scripts, asset migration, and verify scripts are all in place. The following user actions are still required before the backend is live in production:
+**Verified end-to-end (2026-06-21):**
 
-1. Create a Neon Postgres project and set `DATABASE_URL` + `DIRECT_URL` in `.env.local` and on Vercel.
-2. Create a Vercel Blob store and set `BLOB_READ_WRITE_TOKEN` in `.env.local` and on Vercel.
-3. Generate `PAYLOAD_SECRET` (`openssl rand -hex 32`) and set it in `.env.local` and on Vercel.
-4. Set `NEXT_PUBLIC_SERVER_URL` to the production URL.
-5. Push `feat/payload-cms` to the active GitHub repo (`iraselrony/southwest-planning-clone`).
-6. Trigger a redeploy on Vercel (or push a no-op commit — see Vercel env-var PATCH gotcha below).
-7. Run `npm run migrate` to create the Payload tables in Neon (runs once on first build if `push: false`).
-8. Run `npm run seed:all` to populate 18 pages, 14 services, site settings, and initial zones.
-9. Run `npm run migrate:assets` to bulk-upload the 70+ mirrored /public assets to Vercel Blob.
-10. Visit `/admin`, complete the first-run setup wizard, set the admin password.
-11. Edit a page's hero in the admin and verify the public site picks up the change.
-12. Submit the contact form and verify a row appears in `contactSubmissions`.
+- All 8 public routes return 200 from production
+- /admin returns 200 (Payload admin loads)
+- /admin/login returns 200
+- /services/forestry returns 404 (catch-all correctly 404s on unknown slugs)
+- POST /api/contact returns `{ok: true, persisted: true, submissionId: "1"}` and a row appears in the `contact_submissions` Neon table
+
+**Branch state (this snapshot repo, `southwest-planning-clone-no-backend`):**
+
+- `main` is unchanged at `2bf6062` (frozen baseline)
+- `feat/payload-cms` has 9 commits (the Payload work)
+- Force-pushed to `iraselrony/southwest-planning-clone` so Vercel deploys from it
+
+**Backend phase (Payload CMS 3) is scaffolded AND live.** The code, config, admin route group, collection definitions, seed scripts, asset migration, and verify scripts are all in place. Neon Postgres is the production DB (21 tables, 18 pages, 14 services, site settings, contact_submissions seeded). Vercel Blob is configured for the asset-migration script (admin file uploads via the Vercel Blob plugin are deferred to v2 — see below).
 
 ## Checklist
 
@@ -90,12 +91,18 @@ These are the remaining gaps between the frontend and the ideal target. None blo
 
 ### Out of scope (Payload / backend phase)
 
-- ~~Real Payload collections, admin dashboard at `/admin`~~ — **done in `feat/payload-cms`**
-- ~~Migrating assets from `public/` to Vercel Blob~~ — **script implemented; needs real `BLOB_READ_WRITE_TOKEN` to run**
-- ~~Form submissions persistence (DB) — currently logs to console + sends via Resend; the Payload phase adds the `contactSubmissions` collection insert~~ — **done in `feat/payload-cms`** (the `/api/contact` route now does `payload.create()` after the Resend send)
+- ~~Real Payload collections, admin dashboard at `/admin`~~ — **done in `feat/payload-cms`** and live in production
+- ~~Migrating assets from `public/` to Vercel Blob~~ — **script implemented and ready** (`scripts/migrate-assets-to-blob.mjs`); the Vercel Blob token is set in Vercel env vars. Run `npm run migrate:assets` whenever the user wants to bulk-upload the 70+ mirrored /public assets.
+- ~~Form submissions persistence (DB)~~ — **done and live**: POSTing to `/api/contact` returns `{ok: true, persisted: true, submissionId: "1"}` and the row appears in `contact_submissions` in Neon.
+- **Vercel Blob plugin for admin file uploads** — **deferred to v2**. As of `@payloadcms/storage-vercel-blob@3.85.1`, the client upload handler transitively imports the full Payload server bundle (undici, pino, get-tsconfig), which breaks the client build with `node:` scheme errors. The Media collection uses `staticDir: "media"` (local disk) for v1 — works in dev, won't persist on Vercel serverless. New admin uploads need a custom upload handler (Vercel Blob SDK directly from a server route, with a signed-URL flow) or an upstream fix.
 - Refactoring `dangerouslySetInnerHTML` pages into proper React components (per-section extraction) — deferred to v2; the block-based hybrid is the v1 deliverable
 - Domain cutover: `www.southwestplanningconsultancy.co.uk` → Vercel — separate task, not in scope
-- Production rename: `southwest-planning-clone` → `southwest-planning-consultancy` (and reconciling with the pre-existing private repo / Vercel project of the same name) — separate task, not in scope
+- Production rename: `southwest-planning-clone` → `southwest-planning-consultancy` — separate task, not in scope
+
+### Outstanding user actions (none blocking)
+
+1. **Set the admin password**: visit `https://southwest-planning-clone.vercel.app/admin`, complete the first-run setup wizard. The single admin is `iraselrony@gmail.com`.
+2. **Optional: run the asset migration**: `npm run migrate:assets` (from the no-backend snapshot with the Vercel Blob token in `.env.local`) uploads the 70+ mirrored /public files to Vercel Blob. The site currently serves them from `/public`; the migration moves them to Blob URLs.
 
 ## Live state
 
