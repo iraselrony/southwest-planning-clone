@@ -6,7 +6,7 @@
  *
  * Usage: npx payload run scripts/seed-site-settings.mjs
  */
-import { getPayload } from "payload";
+import payload from "payload";
 import config from "../payload.config.ts";
 
 const SITE_SETTINGS = {
@@ -31,20 +31,13 @@ const SITE_SETTINGS = {
 		"© South West Planning Consultancy Ltd. Registered in England and Wales. Company number 13398455.",
 };
 
-async function main() {
-	const payload = await getPayload({ config });
-	console.log("Seeding site settings...");
+await payload.init({ config, disableOnInit: true });
+console.log("Seeding site settings...");
 
-	await payload.updateGlobal({
-		slug: "site-settings",
-		data: SITE_SETTINGS,
-	});
-
-	console.log("  ✓ site-settings updated");
-	process.exit(0);
-}
-
-main().catch((e) => {
-	console.error("seed-site-settings failed:", e);
-	process.exit(1);
+await payload.updateGlobal({
+	slug: "site-settings",
+	data: SITE_SETTINGS,
 });
+
+console.log("  ✓ site-settings updated");
+process.exit(0);

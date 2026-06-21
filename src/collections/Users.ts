@@ -7,25 +7,25 @@ import { isAdmin } from "../access";
  * CLI `payload createUser`) can create a user.
  */
 export const Users: CollectionConfig = {
-  slug: "users",
-  auth: true,
-  admin: {
-    useAsTitle: "email",
-    defaultColumns: ["email", "createdAt"],
-    description: "Single admin user. Login at /admin.",
-  },
-  access: {
-    create: () => false, // disable public registration
-    read: isAdmin,
-    update: isAdmin,
-    delete: isAdmin,
-  },
-  fields: [
-    {
-      name: "name",
-      type: "text",
-      required: false,
-    },
-  ],
-  timestamps: true,
+	slug: "users",
+	auth: true,
+	admin: {
+		useAsTitle: "email",
+		defaultColumns: ["email", "createdAt"],
+		description: "Single admin user. Login at /admin.",
+	},
+	access: {
+		create: () => false, // disable public registration
+		read: isAdmin,
+		update: isAdmin,
+		delete: isAdmin,
+	},
+	fields: [
+		{
+			name: "name",
+			type: "text",
+			required: false,
+		},
+	],
+	timestamps: true,
 };

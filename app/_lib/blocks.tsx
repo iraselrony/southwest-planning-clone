@@ -27,9 +27,13 @@ export type LexicalNode = {
 	[key: string]: unknown;
 };
 
-export type LexicalContent = {
-	root?: LexicalNode & { children?: LexicalNode[] };
-} | LexicalNode[] | null | undefined;
+export type LexicalContent =
+	| {
+			root?: LexicalNode & { children?: LexicalNode[] };
+	  }
+	| LexicalNode[]
+	| null
+	| undefined;
 
 export type HeroBlockData = {
 	heading?: string;
@@ -64,11 +68,35 @@ export type ServiceCardsBlockData = {
 };
 
 export type ZoneBlock =
-	| { blockType: "hero"; heading?: string; subheading?: string; image?: { url?: string; alt?: string } | string; buttonText?: string; buttonUrl?: string }
+	| {
+			blockType: "hero";
+			heading?: string;
+			subheading?: string;
+			image?: { url?: string; alt?: string } | string;
+			buttonText?: string;
+			buttonUrl?: string;
+	  }
 	| { blockType: "richText"; content?: LexicalContent }
-	| { blockType: "imageAndText"; image?: { url?: string; alt?: string } | string; alt?: string; content?: LexicalContent; imagePosition?: "left" | "right" }
-	| { blockType: "cta"; heading?: string; subheading?: string; buttonText?: string; buttonUrl?: string }
-	| { blockType: "serviceCards"; heading?: string; subheading?: string; serviceSlugs?: string[] };
+	| {
+			blockType: "imageAndText";
+			image?: { url?: string; alt?: string } | string;
+			alt?: string;
+			content?: LexicalContent;
+			imagePosition?: "left" | "right";
+	  }
+	| {
+			blockType: "cta";
+			heading?: string;
+			subheading?: string;
+			buttonText?: string;
+			buttonUrl?: string;
+	  }
+	| {
+			blockType: "serviceCards";
+			heading?: string;
+			subheading?: string;
+			serviceSlugs?: string[];
+	  };
 
 function escapeAttr(s: string): string {
 	return s
@@ -93,7 +121,10 @@ function imageUrl(image: { url?: string } | string | undefined): string {
 	return image.url || "";
 }
 
-function imageAlt(image: { alt?: string } | string | undefined, fallback: string): string {
+function imageAlt(
+	image: { alt?: string } | string | undefined,
+	fallback: string,
+): string {
 	if (typeof image === "object" && image?.alt) return image.alt;
 	return fallback;
 }
@@ -148,7 +179,10 @@ export function renderServiceCardsBlock(
 		.map((slug) => {
 			const s = referenced[slug];
 			if (!s) return "";
-			const cardImage = s.cardImage as { url?: string; alt?: string } | string | undefined;
+			const cardImage = s.cardImage as
+				| { url?: string; alt?: string }
+				| string
+				| undefined;
 			const img = imageUrl(cardImage);
 			const alt = imageAlt(cardImage, s.name);
 			const link = `/services/${s.slug}`;
@@ -184,7 +218,10 @@ export function renderBlock(
 		case "cta":
 			return renderCtaBlock(block as CtaBlockData);
 		case "serviceCards":
-			return renderServiceCardsBlock(block as ServiceCardsBlockData, referenced);
+			return renderServiceCardsBlock(
+				block as ServiceCardsBlockData,
+				referenced,
+			);
 		default:
 			return "";
 	}

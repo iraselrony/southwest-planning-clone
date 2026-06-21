@@ -26,6 +26,6 @@ export const isAdmin: Access = ({ req: { user } }) => Boolean(user);
  * collection.
  */
 export const isAdminOrSelf: Access = ({ req: { user } }) => {
-  if (user) return true;
-  return false;
+	if (user) return true;
+	return false;
 };

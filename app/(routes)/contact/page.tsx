@@ -3,7 +3,11 @@
 
 import { readFile } from "node:fs/promises";
 import DOMPurify from "isomorphic-dompurify";
-import { buildHeadFromHtml, extractBodyInner, resolveMirrorPath } from "../../_lib/page";
+import {
+	buildHeadFromHtml,
+	extractBodyInner,
+	resolveMirrorPath,
+} from "../../_lib/page";
 import { getPageSeo } from "../../_lib/seo";
 import { getPayloadClient } from "../../_lib/payload-client";
 import type { Page } from "../../_lib/types";

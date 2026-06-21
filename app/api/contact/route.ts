@@ -32,10 +32,7 @@ type ContactPayload = {
 	[k: string]: unknown;
 };
 
-function parseEmailList(
-	raw: string | undefined,
-	fallback: string[],
-): string[] {
+function parseEmailList(raw: string | undefined, fallback: string[]): string[] {
 	const source = raw ?? fallback.join(",");
 	const list = source
 		.split(",")
@@ -162,7 +159,7 @@ async function persistSubmission(
 			// already gated on validation.
 			overrideAccess: true,
 		});
-		return { ok: true, submissionId: created.id as string };
+		return { ok: true, submissionId: String(created.id) };
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : String(e);
 		console.error("[contact] payload insert failed", msg);
@@ -252,7 +249,11 @@ export async function POST(request: Request) {
 	let emailOk = false;
 	let emailId: string | undefined;
 	try {
-		console.log("[contact] sending", { from: FROM_EMAIL, to: TO_EMAILS, subject });
+		console.log("[contact] sending", {
+			from: FROM_EMAIL,
+			to: TO_EMAILS,
+			subject,
+		});
 
 		const { data, error } = await resend.emails.send({
 			from: FROM_EMAIL,

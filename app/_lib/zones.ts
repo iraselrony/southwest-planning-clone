@@ -14,12 +14,7 @@
  *   4. In the admin, add a `body` block to the page with that zoneId.
  */
 export const ZONES: Record<string, string[]> = {
-	"/": [
-		"home-hero",
-		"about",
-		"service-cards",
-		"contact-cta",
-	],
+	"/": ["home-hero", "about", "service-cards", "contact-cta"],
 	"/contact": ["contact-intro", "contact-form-copy"],
 	"/our-services": ["services-hero", "services-list"],
 	"/privacy-cookie-policy": ["policy-body"],

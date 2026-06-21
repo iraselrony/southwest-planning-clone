@@ -27,7 +27,7 @@ const DEFAULT_SEO: PageSeo = {
 		"South West Planning is an independent practice based in the West Country and providing planning and design consultancy services throughout the area",
 };
 
-const SEO: Record<string, PageSeo> = {
+export const SEO: Record<string, PageSeo> = {
 	"/": {
 		title: "South West Planning Consultancy | Planning Consultants Southwest",
 		description:

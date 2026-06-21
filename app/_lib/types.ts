@@ -4,7 +4,7 @@
  * `payload generate:types`), prefer importing from there for accuracy.
  */
 export type Media = {
-	id: string;
+	id: string | number;
 	filename?: string;
 	url?: string;
 	alt?: string;
@@ -15,7 +15,7 @@ export type Media = {
 };
 
 export type Service = {
-	id: string;
+	id: string | number;
 	slug: string;
 	name: string;
 	subtitle?: string;
@@ -27,7 +27,7 @@ export type Service = {
 };
 
 export type Page = {
-	id: string;
+	id: string | number;
 	slug: string;
 	title: string;
 	metaTitle?: string;

@@ -36,7 +36,8 @@ const ASSET_DIRS = [
 	"ajax.googleapis.com",
 ];
 
-const OG_IMAGE = "cdn.prod.website-files.com/62c2cea31ea6c6cc6f1800b3/62c5aa23496b656c97102833_Southwest-og.jpg";
+const OG_IMAGE =
+	"cdn.prod.website-files.com/62c2cea31ea6c6cc6f1800b3/62c5aa23496b656c97102833_Southwest-og.jpg";
 
 async function readJson(path, fallback) {
 	if (!existsSync(path)) return fallback;
@@ -144,7 +145,9 @@ async function main() {
 	await writeJson(MANIFEST_PATH, manifest);
 	await writeJson(MANIFEST_HASHES_PATH, hashes);
 
-	console.log(`\nDone. Uploaded ${uploaded}, skipped ${skipped}, failed ${failed}.`);
+	console.log(
+		`\nDone. Uploaded ${uploaded}, skipped ${skipped}, failed ${failed}.`,
+	);
 	console.log(`Manifest: ${relative(ROOT, MANIFEST_PATH)}`);
 	process.exit(failed > 0 ? 1 : 0);
 }

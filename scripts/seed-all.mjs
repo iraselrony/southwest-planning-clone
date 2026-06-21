@@ -8,15 +8,18 @@
 import { spawn } from "node:child_process";
 
 const STEPS = [
-	{ name: "pages",    cmd: "node", args: ["scripts/seed-pages.mjs"] },
+	{ name: "pages", cmd: "node", args: ["scripts/seed-pages.mjs"] },
 	{ name: "services", cmd: "node", args: ["scripts/seed-services.mjs"] },
 	{ name: "settings", cmd: "node", args: ["scripts/seed-site-settings.mjs"] },
-	{ name: "zones",    cmd: "node", args: ["scripts/seed-initial-zones.mjs"] },
+	{ name: "zones", cmd: "node", args: ["scripts/seed-initial-zones.mjs"] },
 ];
 
 function run(step) {
 	return new Promise((resolve, reject) => {
-		const child = spawn(step.cmd, step.args, { stdio: "inherit", env: process.env });
+		const child = spawn(step.cmd, step.args, {
+			stdio: "inherit",
+			env: process.env,
+		});
 		child.on("exit", (code) => {
 			if (code === 0) resolve();
 			else reject(new Error(`${step.name} exited with code ${code}`));

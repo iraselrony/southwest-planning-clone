@@ -12,7 +12,11 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { notFound } from "next/navigation";
 import DOMPurify from "isomorphic-dompurify";
-import { buildHeadFromHtml, extractBodyInner, resolveMirrorPath } from "../../../_lib/page";
+import {
+	buildHeadFromHtml,
+	extractBodyInner,
+	resolveMirrorPath,
+} from "../../../_lib/page";
 import { getPageSeo } from "../../../_lib/seo";
 import { getPayloadClient } from "../../../_lib/payload-client";
 import type { Page, Service } from "../../../_lib/types";
@@ -115,9 +119,13 @@ export default async function ServicePage({
 	// If no mirror HTML (i.e. a service was added via admin without a
 	// mirror), render a minimal page shell from the service record.
 	if (!body) {
-		const card = service.cardImage as { url?: string; alt?: string } | string | undefined;
+		const card = service.cardImage as
+			| { url?: string; alt?: string }
+			| string
+			| undefined;
 		const cardUrl = typeof card === "string" ? card : card?.url || "";
-		const cardAlt = typeof card === "string" ? service.name : card?.alt || service.name;
+		const cardAlt =
+			typeof card === "string" ? service.name : card?.alt || service.name;
 		body = `
 			<section class="section hero">
 				<div class="container">
@@ -142,10 +150,7 @@ export default async function ServicePage({
 }
 
 function escapeHtml(s: string): string {
-	return s
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;");
+	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function escapeAttr(s: string): string {

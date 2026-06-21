@@ -67,7 +67,9 @@ try {
 	if (services.docs.length >= 14) {
 		pass(`services collection has ${services.docs.length} docs (>= 14)`);
 	} else {
-		fail(`services collection has ${services.docs.length} docs (expected >= 14)`);
+		fail(
+			`services collection has ${services.docs.length} docs (expected >= 14)`,
+		);
 	}
 } catch (e) {
 	fail(`services find failed: ${e.message}`);

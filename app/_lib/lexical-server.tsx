@@ -79,7 +79,10 @@ function renderNode(node: LexicalNode): string {
 			return `<blockquote>${inner}</blockquote>`;
 		}
 		case "upload": {
-			const value = node.value as { url?: string; alt?: string } | string | undefined;
+			const value = node.value as
+				| { url?: string; alt?: string }
+				| string
+				| undefined;
 			const url = typeof value === "string" ? value : value?.url || "";
 			const alt = typeof value === "string" ? "" : value?.alt || "";
 			if (!url) return "";

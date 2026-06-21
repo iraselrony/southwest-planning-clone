@@ -242,10 +242,14 @@ function injectZoneContent(
 	referencedServices: Record<string, Service>,
 ): string {
 	if (!page?.body || page.body.length === 0) return html;
-	const zoneMap: Record<string, { blockType: string; [k: string]: unknown }> = {};
+	const zoneMap: Record<string, { blockType: string; [k: string]: unknown }> =
+		{};
 	for (const item of page.body) {
 		if (item?.zoneId && item.block) {
-			zoneMap[item.zoneId] = item.block as { blockType: string; [k: string]: unknown };
+			zoneMap[item.zoneId] = item.block as {
+				blockType: string;
+				[k: string]: unknown;
+			};
 		}
 	}
 	if (Object.keys(zoneMap).length === 0) return html;
@@ -372,7 +376,9 @@ export function buildHeadFromHtml(
 	// Canonical: Payload override > HTML value > constructed from pageUrl.
 	const PRODUCTION_BASE = "https://www.southwestplanningconsultancy.co.uk";
 	const canonical =
-		overrides?.canonical ?? htmlCanonical ?? `${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`;
+		overrides?.canonical ??
+		htmlCanonical ??
+		`${PRODUCTION_BASE}${pageUrl === "/" ? "/" : pageUrl}`;
 
 	const metadata: Metadata = {
 		...(title ? { title } : {}),

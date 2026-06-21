@@ -54,7 +54,9 @@ for (const { url, file } of rows) {
 	// Service pages are now a catch-all at app/(routes)/services/[slug]/page.tsx.
 	// Skip them here; the catch-all handles lookup by params.slug.
 	if (url.startsWith("/services/")) {
-		console.log(`  - ${url} (handled by app/(routes)/services/[slug]/page.tsx)`);
+		console.log(
+			`  - ${url} (handled by app/(routes)/services/[slug]/page.tsx)`,
+		);
 		continue;
 	}
 

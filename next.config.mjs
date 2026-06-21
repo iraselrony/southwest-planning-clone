@@ -2,14 +2,6 @@ import { withPayload } from "@payloadcms/next/withPayload";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	// `output: "standalone"` is honoured by Vercel at deploy time and is the
-	// right setting for production. Locally, however, it breaks `next start`
-	// (the official docs warn "next start does not work with output: standalone
-	// configuration") because the standalone build does not bundle files added
-	// to public/ after the trace. The deploy path (Vercel) handles public/
-	// via its own CDN, so this config is correct in production but unusable
-	// for local verification. We omit it here so `npm run build && npm run
-	// start` correctly serves the public/ directory.
 	reactStrictMode: true,
 	images: {
 		remotePatterns: [
@@ -25,22 +17,12 @@ const nextConfig = {
 				protocol: "https",
 				hostname: "cdn.prod.website-files.com",
 			},
-			// Vercel Blob storage public hostname. Add the specific
-			// subdomain for the project's blob store, e.g.
-			// `<random>.public.blob.vercel-storage.com`. Wildcard is fine
-			// because the token gates access on the server side.
 			{
 				protocol: "https",
 				hostname: "*.public.blob.vercel-storage.com",
 			},
 		],
 	},
-	// Safety net for any external links / cached URLs that still use the
-	// original Webflow `.html` paths (e.g. /contact.html, /services/housing.html).
-	// The page bodies themselves are rewritten to clean URLs at render time in
-	// app/_lib/page.ts → rewriteInternalLinks(), but this rewrite ensures that
-	// if anyone hits a `.html` URL directly (e.g. from an old backlink or a
-	// search-engine cache), they still land on the correct page.
 	async rewrites() {
 		const KNOWN = [
 			"/",
@@ -67,9 +49,6 @@ const nextConfig = {
 			return [{ source: htmlPath, destination: p }];
 		});
 	},
-	// The Payload admin and API need a larger body limit than the default
-	// 1 MB so that image uploads via the admin UI don't fail at the
-	// Next.js server boundary. 50 MB matches the limit in payload.config.ts.
 	experimental: {
 		serverActions: {
 			bodySizeLimit: "50mb",

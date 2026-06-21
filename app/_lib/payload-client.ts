@@ -2,9 +2,12 @@
  * Cached Payload client. The first call boots the Payload instance; every
  * subsequent call in the same process reuses the cached handle.
  *
- * This module is server-only; never import it into a client component.
+ * Server-only by convention. This module is imported only from:
+ *   - React Server Components (Next.js page files)
+ *   - API route handlers
+ *   - Payload seed/migration scripts (via `payload run`)
+ * The Payload Local API is not safe to call from client components.
  */
-import "server-only";
 import { getPayload, type Payload } from "payload";
 import config from "@payload-config";
 

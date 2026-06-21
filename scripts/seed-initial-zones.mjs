@@ -103,7 +103,16 @@ function extractZoneHtml($, zoneId) {
 
 function lexFromHtml(html) {
 	if (!html || !html.trim()) {
-		return { root: { type: "root", children: [], direction: null, format: "", indent: 0, version: 1 } };
+		return {
+			root: {
+				type: "root",
+				children: [],
+				direction: null,
+				format: "",
+				indent: 0,
+				version: 1,
+			},
+		};
 	}
 	const text = html
 		.replace(/<br\s*\/?>/gi, "\n")
@@ -119,26 +128,26 @@ function lexFromHtml(html) {
 			version: 1,
 			children: text
 				? [
-					{
-						type: "paragraph",
-						direction: null,
-						format: "",
-						indent: 0,
-						version: 1,
-						textFormat: 0,
-						children: [
-							{
-								type: "text",
-								format: 0,
-								text,
-								version: 1,
-								mode: "normal",
-								detail: 0,
-								style: "",
-							},
-						],
-					},
-				]
+						{
+							type: "paragraph",
+							direction: null,
+							format: "",
+							indent: 0,
+							version: 1,
+							textFormat: 0,
+							children: [
+								{
+									type: "text",
+									format: 0,
+									text,
+									version: 1,
+									mode: "normal",
+									detail: 0,
+									style: "",
+								},
+							],
+						},
+					]
 				: [],
 		},
 	};
@@ -174,9 +183,7 @@ async function main() {
 		const $ = cheerio.load(raw);
 
 		const newBody = [];
-		const existingZones = new Set(
-			(page.body || []).map((b) => b.zoneId),
-		);
+		const existingZones = new Set((page.body || []).map((b) => b.zoneId));
 
 		for (const zoneId of zoneIds) {
 			if (existingZones.has(zoneId)) {
@@ -204,7 +211,9 @@ async function main() {
 		console.log(`  + ${slug} (${newBody.length} new zones)`);
 	}
 
-	console.log(`\nDone. Updated ${updated}, skipped ${skipped} (already populated).`);
+	console.log(
+		`\nDone. Updated ${updated}, skipped ${skipped} (already populated).`,
+	);
 	process.exit(0);
 }
 

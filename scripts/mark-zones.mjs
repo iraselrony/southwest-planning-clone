@@ -48,13 +48,16 @@ const MARKED = join(
  */
 const MARKERS = {
 	"/": [
-		{ zoneId: "home-hero",     selector: "h1" },
-		{ zoneId: "about",         selector: ".about-section, section.about" },
-		{ zoneId: "service-cards", selector: ".services-grid, .service-cards, section.services" },
-		{ zoneId: "contact-cta",   selector: ".contact-cta, section.cta" },
+		{ zoneId: "home-hero", selector: "h1" },
+		{ zoneId: "about", selector: ".about-section, section.about" },
+		{
+			zoneId: "service-cards",
+			selector: ".services-grid, .service-cards, section.services",
+		},
+		{ zoneId: "contact-cta", selector: ".contact-cta, section.cta" },
 	],
 	"/contact": [
-		{ zoneId: "contact-intro",     selector: ".intro, .contact-intro" },
+		{ zoneId: "contact-intro", selector: ".intro, .contact-intro" },
 		{ zoneId: "contact-form-copy", selector: ".form-copy, .contact-copy" },
 	],
 	"/our-services": [
@@ -159,7 +162,9 @@ async function main() {
 		console.log(`  + ${rel} (${markers.length} zones)`);
 	}
 
-	console.log(`\nDone. Processed ${processed} files into ${relative(ROOT, MARKED)}.`);
+	console.log(
+		`\nDone. Processed ${processed} files into ${relative(ROOT, MARKED)}.`,
+	);
 	process.exit(0);
 }
 
