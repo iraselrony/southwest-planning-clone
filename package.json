@@ -12,7 +12,7 @@
     "generate-routes": "node scripts/generate-routes.mjs",
     "visual-diff": "node scripts/visual-diff.mjs",
     "verify": "node scripts/verify.mjs",
-    "verify:payload": "node scripts/verify-payload.mjs",
+    "verify:payload": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/verify-payload.mjs",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "migrate:create": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:create",
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",

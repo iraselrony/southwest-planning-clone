@@ -1,22 +1,14 @@
 #!/usr/bin/env node
 /**
- * Seed the `pages.body` array with the current static content from the
- * mirrored HTML, so the admin isn't empty on first load.
+ * Seed the new `pages.blocks` layout field with starter content extracted
+ * from the mirrored Webflow HTML, so editors have real content examples in
+ * the Payload admin.
  *
- * For each page slug, this script:
- *   1. Reads the marked mirror HTML (or the unmarked mirror if marked
- *      doesn't exist yet).
- *   2. For each zone defined in `app/_lib/zones.ts`, extracts the
- *      matching region (e.g. the first <h1> in the document for the
- *      "home-hero" zone) and captures its inner HTML.
- *   3. Inserts a `body` item with the captured HTML wrapped in a
- *      richTextBlock (or heroBlock for hero zones).
- *
- * Idempotent: only seeds zones that aren't already populated for a
- * given page. Safe to re-run after the mark-zones script.
+ * This replaces the old `pages.body[].zoneId` seeding flow. It does not
+ * affect the public Webflow-clone fallback HTML; it only gives the admin
+ * editable block records to start from.
  *
  * Usage: npx payload run scripts/seed-initial-zones.mjs
- *   (or node scripts/seed-initial-zones.mjs once `tsx` is available)
  */
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -47,9 +39,7 @@ const PAGE_FILES = {
 };
 
 function fileFor(slug) {
-	if (PAGE_FILES[slug]) {
-		return { file: PAGE_FILES[slug], base: MIRROR_BASE };
-	}
+	if (PAGE_FILES[slug]) return { file: PAGE_FILES[slug], base: MIRROR_BASE };
 	if (slug.startsWith("/services/")) {
 		const serviceSlug = slug.replace(/^\/services\//, "");
 		return { file: `services/${serviceSlug}.html`, base: MIRROR_BASE };
@@ -57,68 +47,13 @@ function fileFor(slug) {
 	return null;
 }
 
-function extractZoneHtml($, zoneId) {
-	const $zone = $(`[data-payload-zone="${zoneId}"]`).first();
-	if ($zone.length > 0) {
-		const innerHtml = $zone.html() || "";
-		if (zoneId.endsWith("-hero")) {
-			const $h = $zone.find("h1, h2").first();
-			const heading = $h.text().trim();
-			const $sub = $zone.find("p").first();
-			const subheading = $sub.text().trim();
-			return {
-				blockType: "hero",
-				content: { heading, subheading },
-			};
-		}
-		return {
-			blockType: "richText",
-			content: lexFromHtml(innerHtml),
-		};
-	}
-
-	switch (zoneId) {
-		case "home-hero": {
-			const $h = $("h1").first();
-			const $sub = $("h1").first().next("p, div").first();
-			return {
-				blockType: "hero",
-				content: {
-					heading: $h.text().trim(),
-					subheading: $sub.text().trim(),
-				},
-			};
-		}
-		case "service-hero": {
-			const $h = $("h1").first();
-			return {
-				blockType: "hero",
-				content: { heading: $h.text().trim() },
-			};
-		}
-		default:
-			return null;
-	}
-}
-
 function lexFromHtml(html) {
-	if (!html || !html.trim()) {
-		return {
-			root: {
-				type: "root",
-				children: [],
-				direction: null,
-				format: "",
-				indent: 0,
-				version: 1,
-			},
-		};
-	}
-	const text = html
+	const text = (html || "")
 		.replace(/<br\s*\/?>/gi, "\n")
 		.replace(/<[^>]+>/g, " ")
 		.replace(/\s+/g, " ")
 		.trim();
+
 	return {
 		root: {
 			type: "root",
@@ -153,71 +88,80 @@ function lexFromHtml(html) {
 	};
 }
 
-async function main() {
-	const payload = await getPayload({ config });
-	console.log("Seeding initial zones...");
-
-	const pages = await payload.find({ collection: "pages", limit: 100 });
-	let updated = 0;
-	let skipped = 0;
-
-	for (const page of pages.docs) {
-		const slug = page.slug;
-		const zoneIds =
-			ZONES[slug] ?? (slug.startsWith("/services/") ? SERVICE_ZONES : []);
-		if (zoneIds.length === 0) continue;
-
-		const file = fileFor(slug);
-		if (!file) continue;
-
-		const markedPath = join(MARKED_BASE, file.file);
-		const sourcePath = existsSync(markedPath)
-			? markedPath
-			: join(file.base, file.file);
-		if (!existsSync(sourcePath)) {
-			console.log(`  ! no source for ${slug}`);
-			continue;
+function extractBlock($, zoneId) {
+	const $zone = $(`[data-payload-zone="${zoneId}"]`).first();
+	if ($zone.length > 0) {
+		if (zoneId.endsWith("-hero")) {
+			const heading = $zone.find("h1, h2").first().text().trim();
+			const subheading = $zone.find("p").first().text().trim();
+			return { blockType: "hero", heading, subheading };
 		}
-
-		const raw = await readFile(sourcePath, "utf-8");
-		const $ = cheerio.load(raw);
-
-		const newBody = [];
-		const existingZones = new Set((page.body || []).map((b) => b.zoneId));
-
-		for (const zoneId of zoneIds) {
-			if (existingZones.has(zoneId)) {
-				skipped++;
-				continue;
-			}
-			const extracted = extractZoneHtml($, zoneId);
-			if (!extracted) continue;
-			newBody.push({
-				zoneId,
-				block: { blockType: extracted.blockType, ...extracted.content },
-			});
-		}
-
-		if (newBody.length === 0) continue;
-
-		await payload.update({
-			collection: "pages",
-			id: page.id,
-			data: {
-				body: [...(page.body || []), ...newBody],
-			},
-		});
-		updated++;
-		console.log(`  + ${slug} (${newBody.length} new zones)`);
+		return { blockType: "richText", content: lexFromHtml($zone.html() || "") };
 	}
 
-	console.log(
-		`\nDone. Updated ${updated}, skipped ${skipped} (already populated).`,
-	);
-	process.exit(0);
+	switch (zoneId) {
+		case "home-hero": {
+			const heading = $("h1").first().text().trim();
+			const subheading = $("h1").first().next("p, div").first().text().trim();
+			return { blockType: "hero", heading, subheading };
+		}
+		case "service-hero": {
+			const heading = $("h1").first().text().trim();
+			return { blockType: "hero", heading };
+		}
+		default:
+			return null;
+	}
 }
 
-main().catch((e) => {
-	console.error("seed-initial-zones failed:", e);
-	process.exit(1);
-});
+const payload = await getPayload({ config });
+console.log("Seeding starter page blocks...");
+
+const pages = await payload.find({ collection: "pages", limit: 100 });
+let updated = 0;
+let skipped = 0;
+
+for (const page of pages.docs) {
+	if (Array.isArray(page.blocks) && page.blocks.length > 0) {
+		skipped++;
+		continue;
+	}
+
+	const slug = page.slug;
+	const zoneIds =
+		ZONES[slug] ?? (slug.startsWith("/services/") ? SERVICE_ZONES : []);
+	if (zoneIds.length === 0) continue;
+
+	const file = fileFor(slug);
+	if (!file) continue;
+
+	const markedPath = join(MARKED_BASE, file.file);
+	const sourcePath = existsSync(markedPath)
+		? markedPath
+		: join(file.base, file.file);
+	if (!existsSync(sourcePath)) {
+		console.log(`  ! no source for ${slug}`);
+		continue;
+	}
+
+	const raw = await readFile(sourcePath, "utf-8");
+	const $ = cheerio.load(raw);
+	const blocks = zoneIds
+		.map((zoneId) => extractBlock($, zoneId))
+		.filter(Boolean);
+
+	if (blocks.length === 0) continue;
+
+	await payload.update({
+		collection: "pages",
+		id: page.id,
+		data: { blocks },
+	});
+	updated++;
+	console.log(`  + ${slug} (${blocks.length} blocks)`);
+}
+
+console.log(
+	`\nDone. Updated ${updated}, skipped ${skipped} (already populated).`,
+);
+process.exit(0);

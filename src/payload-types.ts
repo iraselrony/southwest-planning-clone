@@ -69,8 +69,12 @@ export interface Config {
   collections: {
     users: User;
     pages: Page;
+    posts: Post;
+    'post-categories': PostCategory;
     services: Service;
     media: Media;
+    'case-studies': CaseStudy;
+    testimonials: Testimonial;
     'contact-submissions': ContactSubmission;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -81,8 +85,12 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
+    'post-categories': PostCategoriesSelect<false> | PostCategoriesSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'case-studies': CaseStudiesSelect<false> | CaseStudiesSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     'contact-submissions': ContactSubmissionsSelect<false> | ContactSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -128,14 +136,29 @@ export interface UserAuthOperations {
   };
 }
 /**
- * Single admin user. Login at /admin.
+ * Admin users with access to the CMS dashboard.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: number;
+  /**
+   * Administrator has full access. Editor can only edit content.
+   */
+  role: 'admin' | 'editor';
+  /**
+   * Display name shown in the admin interface.
+   */
   name?: string | null;
+  /**
+   * Profile picture displayed in the admin header.
+   */
+  avatar?: (number | null) | Media;
+  /**
+   * Automatically updated when user logs in.
+   */
+  lastLogin?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -156,117 +179,7 @@ export interface User {
   collection: 'users';
 }
 /**
- * One row per public route. 18 rows seeded.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages".
- */
-export interface Page {
-  id: number;
-  /**
-   * URL path. e.g. /, /contact, /services/housing
-   */
-  slug: string;
-  /**
-   * H1 on the page. Displayed in the admin list.
-   */
-  title: string;
-  metaTitle: string;
-  metaDescription: string;
-  ogImage?: (number | null) | Media;
-  showInNav?: boolean | null;
-  /**
-   * Editable zones on the page. Each block is injected into a marked <div data-payload-zone='<zone-id>'> in the page HTML.
-   */
-  body?:
-    | {
-        /**
-         * Stable zone id matching data-payload-zone='<zone-id>' in the mirrored HTML. e.g. home-hero, about, service-cards, contact-cta
-         */
-        zoneId: string;
-        block: (
-          | {
-              heading: string;
-              subheading?: string | null;
-              image?: (number | null) | Media;
-              buttonText?: string | null;
-              buttonUrl?: string | null;
-              id?: string | null;
-              blockName?: string | null;
-              blockType: 'hero';
-            }
-          | {
-              content?: {
-                root: {
-                  type: string;
-                  children: {
-                    type: any;
-                    version: number;
-                    [k: string]: unknown;
-                  }[];
-                  direction: ('ltr' | 'rtl') | null;
-                  format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-                  indent: number;
-                  version: number;
-                };
-                [k: string]: unknown;
-              } | null;
-              id?: string | null;
-              blockName?: string | null;
-              blockType: 'richText';
-            }
-          | {
-              image: number | Media;
-              alt: string;
-              content?: {
-                root: {
-                  type: string;
-                  children: {
-                    type: any;
-                    version: number;
-                    [k: string]: unknown;
-                  }[];
-                  direction: ('ltr' | 'rtl') | null;
-                  format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-                  indent: number;
-                  version: number;
-                };
-                [k: string]: unknown;
-              } | null;
-              imagePosition?: ('left' | 'right') | null;
-              id?: string | null;
-              blockName?: string | null;
-              blockType: 'imageAndText';
-            }
-          | {
-              heading: string;
-              subheading?: string | null;
-              buttonText?: string | null;
-              buttonUrl?: string | null;
-              id?: string | null;
-              blockName?: string | null;
-              blockType: 'cta';
-            }
-          | {
-              heading: string;
-              subheading?: string | null;
-              /**
-               * Select the services to feature in this card grid.
-               */
-              serviceSlugs: (number | Service)[];
-              id?: string | null;
-              blockName?: string | null;
-              blockType: 'serviceCards';
-            }
-        )[];
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Images and other uploaded files. Backed by Vercel Blob.
+ * Images, documents, and other uploaded files.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
@@ -274,14 +187,35 @@ export interface Page {
 export interface Media {
   id: number;
   /**
-   * Alt text for accessibility / SEO.
+   * Required for all images. Used for accessibility (screen readers) and SEO. Be descriptive, e.g. 'Aerial view of Exeter city centre' not 'image1'.
    */
-  alt?: string | null;
+  alt: string;
+  /**
+   * Optional caption displayed below the image on the public site.
+   */
   caption?: string | null;
   /**
-   * Original /public path (set by the asset-migration script). e.g. /cdn.prod.website-files.com/62c.../foo.jpg
+   * Photographer or source credit, e.g. '© SW Planning 2024'.
+   */
+  credit?: string | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  /**
+   * SEO title for the image (defaults to filename). Used when this image is shared on social media.
+   */
+  title?: string | null;
+  /**
+   * SEO description for the image.
+   */
+  description?: string | null;
+  /**
+   * Original file path before migration (read-only). Used by the asset-migration script.
    */
   sourcePath?: string | null;
+  /**
+   * Tags for organizing media in the library.
+   */
+  tags?: ('hero' | 'card' | 'gallery' | 'logo' | 'icon' | 'og' | 'document' | 'drone' | 'site-photo')[] | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -291,8 +225,6 @@ export interface Media {
   filesize?: number | null;
   width?: number | null;
   height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
   sizes?: {
     thumbnail?: {
       url?: string | null;
@@ -303,6 +235,14 @@ export interface Media {
       filename?: string | null;
     };
     card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    hero?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -321,30 +261,371 @@ export interface Media {
   };
 }
 /**
- * 14 service entries. Order controlled by displayOrder.
+ * Public pages with editable content sections.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  /**
+   * Page title displayed as H1 and in admin list.
+   */
+  title: string;
+  /**
+   * Optional subtitle displayed below the title.
+   */
+  subtitle?: string | null;
+  /**
+   * Add and arrange content blocks to build the page layout. Drag to reorder.
+   */
+  blocks?:
+    | (
+        | {
+            /**
+             * Main heading (H1). Keep it compelling and under 60 characters.
+             */
+            heading: string;
+            /**
+             * Supporting text below the heading. 1-2 sentences max.
+             */
+            subheading?: string | null;
+            backgroundType?: ('image' | 'video' | 'color') | null;
+            /**
+             * Dark overlay improves text readability on bright backgrounds.
+             */
+            overlayOpacity?: ('none' | 'light' | 'medium' | 'dark') | null;
+            /**
+             * Recommended: 1920x1080px or larger. Will be cropped to fit.
+             */
+            backgroundImage?: (number | null) | Media;
+            /**
+             * MP4 format recommended. Video will loop and be muted.
+             */
+            backgroundVideo?: (number | null) | Media;
+            /**
+             * Hex color code, e.g. #1a1a1a
+             */
+            backgroundColor?: string | null;
+            textAlign?: ('left' | 'center' | 'right') | null;
+            buttons?:
+              | {
+                  text: string;
+                  url: string;
+                  style?: ('primary' | 'secondary' | 'outline') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            height?: ('small' | 'medium' | 'large') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'hero';
+          }
+        | {
+            /**
+             * Full rich text editor with headings, lists, links, and media embeds.
+             */
+            content: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            };
+            maxWidth?: ('narrow' | 'medium' | 'wide' | 'full') | null;
+            textAlign?: ('left' | 'center' | 'right') | null;
+            backgroundColor?: ('transparent' | 'light-gray' | 'dark-gray' | 'primary') | null;
+            padding?: ('none' | 'small' | 'medium' | 'large') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'richText';
+          }
+        | {
+            /**
+             * Optional section heading displayed above the content.
+             */
+            heading?: string | null;
+            /**
+             * Rich text content displayed alongside the image.
+             */
+            content: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            };
+            /**
+             * Image displayed alongside the text content.
+             */
+            image: number | Media;
+            /**
+             * Position of the image relative to the text.
+             */
+            imagePosition?: ('left' | 'right') | null;
+            imageRatio?: ('33-67' | '50-50' | '67-33') | null;
+            verticalAlign?: ('top' | 'center' | 'bottom') | null;
+            buttons?:
+              | {
+                  text: string;
+                  url: string;
+                  style?: ('primary' | 'secondary' | 'outline') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'imageAndText';
+          }
+        | {
+            /**
+             * Compelling heading that encourages action.
+             */
+            heading: string;
+            /**
+             * Supporting text that explains the benefit of taking action.
+             */
+            subheading?: string | null;
+            buttons?:
+              | {
+                  text: string;
+                  url: string;
+                  style?: ('primary' | 'secondary' | 'outline') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            style?: ('default' | 'dark' | 'gradient' | 'image') | null;
+            textAlign?: ('left' | 'center' | 'right') | null;
+            /**
+             * Background image (only used when style is 'Image Background').
+             */
+            backgroundImage?: (number | null) | Media;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cta';
+          }
+        | {
+            /**
+             * Optional section heading displayed above the cards.
+             */
+            heading?: string | null;
+            /**
+             * Optional supporting text displayed below the heading.
+             */
+            subheading?: string | null;
+            /**
+             * Select the services to display. Leave empty to show all published services.
+             */
+            services: (number | Service)[];
+            columns?: ('2' | '3' | '4') | null;
+            cardStyle?: ('default' | 'bordered' | 'shadow' | 'minimal') | null;
+            /**
+             * Show 'Learn More' button on each card.
+             */
+            showButton?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'serviceCards';
+          }
+        | {
+            /**
+             * Optional section heading.
+             */
+            heading?: string | null;
+            stats?:
+              | {
+                  /**
+                   * The statistic value, e.g. '500+', '25', '98%'.
+                   */
+                  number: string;
+                  /**
+                   * Description of the statistic, e.g. 'Projects Completed', 'Years Experience'.
+                   */
+                  label: string;
+                  /**
+                   * Optional icon to display with the statistic.
+                   */
+                  icon?: (number | null) | Media;
+                  id?: string | null;
+                }[]
+              | null;
+            backgroundColor?: ('white' | 'light-gray' | 'dark-gray' | 'primary') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'stats';
+          }
+        | {
+            /**
+             * Optional section heading, e.g. 'What Our Clients Say'.
+             */
+            heading?: string | null;
+            /**
+             * Select testimonials to display. Recommended: 3-6 testimonials.
+             */
+            testimonials: (number | Testimonial)[];
+            layout?: ('grid' | 'carousel' | 'stacked') | null;
+            /**
+             * Display star rating on each testimonial.
+             */
+            showRating?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'testimonials';
+          }
+        | {
+            /**
+             * Section heading, e.g. 'Frequently Asked Questions'.
+             */
+            heading?: string | null;
+            questions?:
+              | {
+                  question: string;
+                  answer: {
+                    root: {
+                      type: string;
+                      children: {
+                        type: any;
+                        version: number;
+                        [k: string]: unknown;
+                      }[];
+                      direction: ('ltr' | 'rtl') | null;
+                      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                      indent: number;
+                      version: number;
+                    };
+                    [k: string]: unknown;
+                  };
+                  id?: string | null;
+                }[]
+              | null;
+            style?: ('accordion' | 'cards' | 'list') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'faq';
+          }
+        | {
+            /**
+             * Optional section heading.
+             */
+            heading?: string | null;
+            images?:
+              | {
+                  image: number | Media;
+                  caption?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            columns?: ('2' | '3' | '4' | 'masonry') | null;
+            aspectRatio?: ('square' | 'landscape' | 'portrait' | 'original') | null;
+            /**
+             * Allow users to click images to view full-size in a lightbox.
+             */
+            enableLightbox?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'gallery';
+          }
+      )[]
+    | null;
+  /**
+   * Page title for search engines (50-60 characters). Include primary keyword.
+   */
+  metaTitle: string;
+  /**
+   * Page description for search results (150-160 characters). Include call-to-action.
+   */
+  metaDescription: string;
+  /**
+   * Social media preview image (1200x630px). Used when page is shared on social platforms.
+   */
+  ogImage?: (number | null) | Media;
+  /**
+   * Comma-separated keywords for internal reference (not used in meta tags).
+   */
+  keywords?: string | null;
+  /**
+   * URL path, e.g. '/' for homepage, '/about', '/contact'. Use lowercase with hyphens.
+   */
+  slug: string;
+  /**
+   * Page template determines the overall layout structure.
+   */
+  template?: ('default' | 'homepage' | 'service' | 'contact' | 'landing') | null;
+  /**
+   * Display this page in the main navigation menu.
+   */
+  showInNav?: boolean | null;
+  /**
+   * Custom navigation label (defaults to page title if empty).
+   */
+  navLabel?: string | null;
+  /**
+   * Unpublished pages are hidden from the public site but remain editable in admin.
+   */
+  published?: boolean | null;
+  /**
+   * Featured pages may appear in special sections (template-dependent).
+   */
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Planning services offered by the consultancy. Displayed on the homepage grid and individual service pages.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "services".
  */
 export interface Service {
   id: number;
-  slug: string;
+  /**
+   * Service name, e.g. 'Residential Planning' or 'Commercial Development'.
+   */
   name: string;
   /**
-   * Order number, e.g. 01, 02 … 14
+   * Optional subtitle or tagline, e.g. 'Expert guidance for your project'.
    */
   subtitle?: string | null;
   /**
-   * Lower numbers appear first on the homepage grid.
+   * Icon displayed on the service card (recommended: 128x128px SVG or PNG).
    */
-  displayOrder: number;
+  icon?: (number | null) | Media;
+  /**
+   * Main image for the service card (recommended: 800x600px). Optional because the cloned frontend can fall back to existing Webflow assets.
+   */
   cardImage?: (number | null) | Media;
   /**
-   * Short blurb for the homepage card.
+   * Short description (2-3 sentences) shown on the homepage service card. Keep it concise.
    */
   description: string;
   /**
-   * Full content for the service page body zone.
+   * Additional images displayed on the service detail page.
+   */
+  gallery?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Full service description displayed on the service detail page. Use headings, lists, and formatting to structure the content.
    */
   longDescription?: {
     root: {
@@ -361,12 +642,517 @@ export interface Service {
     };
     [k: string]: unknown;
   } | null;
+  faq?:
+    | {
+        question: string;
+        answer: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Page title for search engines (50-60 characters). Include primary keyword.
+   */
+  metaTitle: string;
+  /**
+   * Page description for search results (150-160 characters). Include call-to-action.
+   */
+  metaDescription: string;
+  /**
+   * Social media preview image (1200x630px). Falls back to card image if not set.
+   */
+  ogImage?: (number | null) | Media;
+  /**
+   * Comma-separated keywords for internal reference (not used in meta tags).
+   */
+  keywords?: string | null;
+  /**
+   * URL path: /services/[slug]. Use lowercase with hyphens, e.g. 'residential-planning'.
+   */
+  slug: string;
+  /**
+   * Display order on homepage (lower numbers appear first). Use 10, 20, 30 for easy reordering.
+   */
+  displayOrder: number;
+  /**
+   * Featured services appear in a highlighted section on the homepage.
+   */
+  featured?: boolean | null;
+  /**
+   * Show contact form on this service page.
+   */
   contactFormEnabled?: boolean | null;
+  /**
+   * Unpublished services are hidden from the public site but remain editable in the admin.
+   */
+  published?: boolean | null;
+  /**
+   * Other services to display in the 'Related Services' section.
+   */
+  relatedServices?: (number | Service)[] | null;
+  /**
+   * Case studies to feature on this service page.
+   */
+  caseStudies?: (number | CaseStudy)[] | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
- * Persisted contact form submissions. Public can create; admin can read/delete.
+ * Project case studies showcasing successful planning outcomes.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "case-studies".
+ */
+export interface CaseStudy {
+  id: number;
+  /**
+   * Project title, e.g. 'Residential Development in Exeter'.
+   */
+  title: string;
+  /**
+   * Optional subtitle or tagline.
+   */
+  subtitle?: string | null;
+  /**
+   * Main project image (recommended: 1200x800px).
+   */
+  featuredImage: number | Media;
+  /**
+   * Brief project summary (2-3 sentences) for cards and listings.
+   */
+  summary: string;
+  /**
+   * Client name or organization.
+   */
+  client: string;
+  /**
+   * Project location, e.g. 'Exeter, Devon'.
+   */
+  location: string;
+  /**
+   * Year project was completed.
+   */
+  year: number;
+  /**
+   * Project duration, e.g. '18 months'.
+   */
+  duration?: string | null;
+  /**
+   * Primary service category for this project.
+   */
+  service: number | Service;
+  projectType: 'residential' | 'commercial' | 'mixed-use' | 'industrial' | 'agricultural' | 'other';
+  /**
+   * Describe the planning challenges and constraints.
+   */
+  challenge?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Explain the approach and solutions implemented.
+   */
+  solution?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Describe the results and impact of the project.
+   */
+  outcome?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  gallery?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * URL path: /case-studies/[slug]. Use lowercase with hyphens.
+   */
+  slug: string;
+  /**
+   * Page title for search engines (50-60 characters).
+   */
+  metaTitle: string;
+  /**
+   * Page description for search results (150-160 characters).
+   */
+  metaDescription: string;
+  /**
+   * Social media preview image (1200x630px).
+   */
+  ogImage?: (number | null) | Media;
+  /**
+   * Unpublished case studies are hidden from the public site.
+   */
+  published?: boolean | null;
+  /**
+   * Featured case studies appear in prominent sections.
+   */
+  featured?: boolean | null;
+  /**
+   * Client testimonials related to this project.
+   */
+  testimonials?: (number | Testimonial)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Client testimonials displayed across the site.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  /**
+   * The testimonial quote. Keep it authentic and specific.
+   */
+  quote: string;
+  /**
+   * Client's name as it should appear publicly.
+   */
+  authorName: string;
+  /**
+   * Client's job title or role, e.g. 'Property Developer'.
+   */
+  authorRole?: string | null;
+  /**
+   * Client's company name (optional).
+   */
+  authorCompany?: string | null;
+  /**
+   * Optional headshot of the client (recommended: 200x200px).
+   */
+  authorImage?: (number | null) | Media;
+  /**
+   * Star rating displayed with the testimonial.
+   */
+  rating?: ('5' | '4' | '3') | null;
+  /**
+   * Link this testimonial to a specific service (optional).
+   */
+  service?: (number | null) | Service;
+  /**
+   * Link this testimonial to a specific project (optional).
+   */
+  project?: (number | null) | CaseStudy;
+  /**
+   * Unpublished testimonials are hidden from the public site.
+   */
+  published?: boolean | null;
+  /**
+   * Featured testimonials appear in prominent sections.
+   */
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Editorial hub for news, insights, guides, announcements, and planning alerts.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  /**
+   * Clear editorial headline.
+   */
+  title: string;
+  /**
+   * Optional deck displayed under the title on article templates.
+   */
+  subtitle?: string | null;
+  /**
+   * Short summary for cards, search snippets, and social previews. Aim for 140 to 180 characters.
+   */
+  excerpt: string;
+  /**
+   * Main article body. Use headings, lists, links, and short sections for readability.
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Optional structured content below the article, such as callouts, image sections, CTAs, and galleries.
+   */
+  sections?:
+    | (
+        | {
+            /**
+             * Full rich text editor with headings, lists, links, and media embeds.
+             */
+            content: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            };
+            maxWidth?: ('narrow' | 'medium' | 'wide' | 'full') | null;
+            textAlign?: ('left' | 'center' | 'right') | null;
+            backgroundColor?: ('transparent' | 'light-gray' | 'dark-gray' | 'primary') | null;
+            padding?: ('none' | 'small' | 'medium' | 'large') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'richText';
+          }
+        | {
+            /**
+             * Optional section heading displayed above the content.
+             */
+            heading?: string | null;
+            /**
+             * Rich text content displayed alongside the image.
+             */
+            content: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            };
+            /**
+             * Image displayed alongside the text content.
+             */
+            image: number | Media;
+            /**
+             * Position of the image relative to the text.
+             */
+            imagePosition?: ('left' | 'right') | null;
+            imageRatio?: ('33-67' | '50-50' | '67-33') | null;
+            verticalAlign?: ('top' | 'center' | 'bottom') | null;
+            buttons?:
+              | {
+                  text: string;
+                  url: string;
+                  style?: ('primary' | 'secondary' | 'outline') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'imageAndText';
+          }
+        | {
+            /**
+             * Compelling heading that encourages action.
+             */
+            heading: string;
+            /**
+             * Supporting text that explains the benefit of taking action.
+             */
+            subheading?: string | null;
+            buttons?:
+              | {
+                  text: string;
+                  url: string;
+                  style?: ('primary' | 'secondary' | 'outline') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            style?: ('default' | 'dark' | 'gradient' | 'image') | null;
+            textAlign?: ('left' | 'center' | 'right') | null;
+            /**
+             * Background image (only used when style is 'Image Background').
+             */
+            backgroundImage?: (number | null) | Media;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cta';
+          }
+        | {
+            /**
+             * Optional section heading.
+             */
+            heading?: string | null;
+            images?:
+              | {
+                  image: number | Media;
+                  caption?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            columns?: ('2' | '3' | '4' | 'masonry') | null;
+            aspectRatio?: ('square' | 'landscape' | 'portrait' | 'original') | null;
+            /**
+             * Allow users to click images to view full-size in a lightbox.
+             */
+            enableLightbox?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'gallery';
+          }
+      )[]
+    | null;
+  type: 'insight' | 'news' | 'guide' | 'planning-alert' | 'case-note' | 'announcement';
+  workflowStatus: 'draft' | 'review' | 'published' | 'archived';
+  publishedAt?: string | null;
+  /**
+   * Estimated reading time shown on article cards.
+   */
+  readingTimeMinutes?: number | null;
+  author?: (number | null) | User;
+  categories?: (number | PostCategory)[] | null;
+  relatedServices?: (number | Service)[] | null;
+  relatedCaseStudies?: (number | CaseStudy)[] | null;
+  /**
+   * Manual related reading picks.
+   */
+  relatedPosts?: (number | Post)[] | null;
+  /**
+   * Card image and default article image. Recommended 1200x800px.
+   */
+  featuredImage: number | Media;
+  /**
+   * Optional wide hero image. Falls back to featured image.
+   */
+  heroImage?: (number | null) | Media;
+  /**
+   * Public caption for the hero or featured image.
+   */
+  imageCaption?: string | null;
+  /**
+   * URL path: /posts/[slug]. Use lowercase with hyphens.
+   */
+  slug: string;
+  /**
+   * Search title. Aim for 50 to 60 characters.
+   */
+  metaTitle: string;
+  /**
+   * Search description. Aim for 150 to 160 characters.
+   */
+  metaDescription: string;
+  /**
+   * Social preview image. Recommended 1200x630px.
+   */
+  ogImage?: (number | null) | Media;
+  /**
+   * Optional canonical URL for syndicated content.
+   */
+  canonicalUrl?: string | null;
+  /**
+   * Internal keyword notes, comma-separated.
+   */
+  keywords?: string | null;
+  /**
+   * Feature in dashboard, homepage modules, or post listings.
+   */
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Editorial categories used to organise posts, news, guides, and planning updates.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "post-categories".
+ */
+export interface PostCategory {
+  id: number;
+  name: string;
+  /**
+   * Lowercase URL handle, e.g. planning-guides.
+   */
+  slug: string;
+  /**
+   * Use types to keep the editorial taxonomy useful instead of creating one long messy category list.
+   */
+  type?: ('topic' | 'service-area' | 'location' | 'audience') | null;
+  /**
+   * Internal description for editors and optional intro copy on category archive pages.
+   */
+  description?: string | null;
+  /**
+   * Optional category card image.
+   */
+  featuredImage?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Contact form submissions with status tracking and internal notes.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "contact-submissions".
@@ -374,18 +1160,111 @@ export interface Service {
 export interface ContactSubmission {
   id: number;
   /**
-   * Display label in the admin list. Defaults to name + source at create time.
+   * Auto-generated subject line (can be edited).
    */
   subject?: string | null;
+  /**
+   * Submitter's full name.
+   */
   name: string;
+  /**
+   * Submitter's email address.
+   */
   email: string;
+  /**
+   * Submitter's phone number (optional).
+   */
   phone?: string | null;
+  /**
+   * Submitter's company name (optional).
+   */
+  company?: string | null;
+  /**
+   * Message content from the contact form.
+   */
   message: string;
   /**
-   * Where the form was submitted from. contact-page or service-page:<slug>
+   * Where the form was submitted from. Expected formats: 'contact-page' or 'service-page:<slug>'.
    */
   source: string;
+  /**
+   * Date and time of submission.
+   */
   submittedAt: string;
+  /**
+   * Submitter's IP address (for spam detection).
+   */
+  ipAddress?: string | null;
+  /**
+   * Current status of this submission.
+   */
+  status: 'new' | 'read' | 'in-progress' | 'replied' | 'converted' | 'closed' | 'spam';
+  /**
+   * Priority level for this submission.
+   */
+  priority?: ('low' | 'normal' | 'high' | 'urgent') | null;
+  /**
+   * Team member responsible for this submission.
+   */
+  assignedTo?: (number | null) | User;
+  /**
+   * Tags for categorizing and filtering submissions.
+   */
+  tags?:
+    | (
+        | 'residential'
+        | 'commercial'
+        | 'planning-permission'
+        | 'appeal'
+        | 'consultation'
+        | 'quote-request'
+        | 'follow-up'
+      )[]
+    | null;
+  /**
+   * Internal notes and comments (not visible to submitter).
+   */
+  internalNotes?:
+    | {
+        /**
+         * Internal note (not visible to submitter).
+         */
+        note: string;
+        /**
+         * Team member who added this note.
+         */
+        author?: (number | null) | User;
+        /**
+         * Date note was added.
+         */
+        createdAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Date and time of first reply.
+   */
+  repliedAt?: string | null;
+  /**
+   * How the initial reply was made.
+   */
+  replyMethod?: ('email' | 'phone' | 'meeting' | 'other') | null;
+  /**
+   * Scheduled follow-up date (optional).
+   */
+  followUpDate?: string | null;
+  /**
+   * Final outcome of this submission.
+   */
+  outcome?: ('quote-sent' | 'meeting-booked' | 'project-won' | 'project-lost' | 'not-suitable' | 'no-response') | null;
+  /**
+   * Estimated project value (if converted).
+   */
+  projectValue?: number | null;
+  /**
+   * Link to case study if this submission resulted in a project.
+   */
+  convertedToProject?: (number | null) | CaseStudy;
   updatedAt: string;
   createdAt: string;
 }
@@ -422,12 +1301,28 @@ export interface PayloadLockedDocument {
         value: number | Page;
       } | null)
     | ({
+        relationTo: 'posts';
+        value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'post-categories';
+        value: number | PostCategory;
+      } | null)
+    | ({
         relationTo: 'services';
         value: number | Service;
       } | null)
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'case-studies';
+        value: number | CaseStudy;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
       } | null)
     | ({
         relationTo: 'contact-submissions';
@@ -480,7 +1375,10 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
   name?: T;
+  avatar?: T;
+  lastLogin?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -503,69 +1401,281 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
-  slug?: T;
   title?: T;
+  subtitle?: T;
+  blocks?:
+    | T
+    | {
+        hero?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              backgroundType?: T;
+              overlayOpacity?: T;
+              backgroundImage?: T;
+              backgroundVideo?: T;
+              backgroundColor?: T;
+              textAlign?: T;
+              buttons?:
+                | T
+                | {
+                    text?: T;
+                    url?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              height?: T;
+              id?: T;
+              blockName?: T;
+            };
+        richText?:
+          | T
+          | {
+              content?: T;
+              maxWidth?: T;
+              textAlign?: T;
+              backgroundColor?: T;
+              padding?: T;
+              id?: T;
+              blockName?: T;
+            };
+        imageAndText?:
+          | T
+          | {
+              heading?: T;
+              content?: T;
+              image?: T;
+              imagePosition?: T;
+              imageRatio?: T;
+              verticalAlign?: T;
+              buttons?:
+                | T
+                | {
+                    text?: T;
+                    url?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        cta?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              buttons?:
+                | T
+                | {
+                    text?: T;
+                    url?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              style?: T;
+              textAlign?: T;
+              backgroundImage?: T;
+              id?: T;
+              blockName?: T;
+            };
+        serviceCards?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              services?: T;
+              columns?: T;
+              cardStyle?: T;
+              showButton?: T;
+              id?: T;
+              blockName?: T;
+            };
+        stats?:
+          | T
+          | {
+              heading?: T;
+              stats?:
+                | T
+                | {
+                    number?: T;
+                    label?: T;
+                    icon?: T;
+                    id?: T;
+                  };
+              backgroundColor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        testimonials?:
+          | T
+          | {
+              heading?: T;
+              testimonials?: T;
+              layout?: T;
+              showRating?: T;
+              id?: T;
+              blockName?: T;
+            };
+        faq?:
+          | T
+          | {
+              heading?: T;
+              questions?:
+                | T
+                | {
+                    question?: T;
+                    answer?: T;
+                    id?: T;
+                  };
+              style?: T;
+              id?: T;
+              blockName?: T;
+            };
+        gallery?:
+          | T
+          | {
+              heading?: T;
+              images?:
+                | T
+                | {
+                    image?: T;
+                    caption?: T;
+                    id?: T;
+                  };
+              columns?: T;
+              aspectRatio?: T;
+              enableLightbox?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
   metaTitle?: T;
   metaDescription?: T;
   ogImage?: T;
+  keywords?: T;
+  slug?: T;
+  template?: T;
   showInNav?: T;
-  body?:
+  navLabel?: T;
+  published?: T;
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  title?: T;
+  subtitle?: T;
+  excerpt?: T;
+  content?: T;
+  sections?:
     | T
     | {
-        zoneId?: T;
-        block?:
+        richText?:
           | T
           | {
-              hero?:
-                | T
-                | {
-                    heading?: T;
-                    subheading?: T;
-                    image?: T;
-                    buttonText?: T;
-                    buttonUrl?: T;
-                    id?: T;
-                    blockName?: T;
-                  };
-              richText?:
-                | T
-                | {
-                    content?: T;
-                    id?: T;
-                    blockName?: T;
-                  };
-              imageAndText?:
-                | T
-                | {
-                    image?: T;
-                    alt?: T;
-                    content?: T;
-                    imagePosition?: T;
-                    id?: T;
-                    blockName?: T;
-                  };
-              cta?:
-                | T
-                | {
-                    heading?: T;
-                    subheading?: T;
-                    buttonText?: T;
-                    buttonUrl?: T;
-                    id?: T;
-                    blockName?: T;
-                  };
-              serviceCards?:
-                | T
-                | {
-                    heading?: T;
-                    subheading?: T;
-                    serviceSlugs?: T;
-                    id?: T;
-                    blockName?: T;
-                  };
+              content?: T;
+              maxWidth?: T;
+              textAlign?: T;
+              backgroundColor?: T;
+              padding?: T;
+              id?: T;
+              blockName?: T;
             };
-        id?: T;
+        imageAndText?:
+          | T
+          | {
+              heading?: T;
+              content?: T;
+              image?: T;
+              imagePosition?: T;
+              imageRatio?: T;
+              verticalAlign?: T;
+              buttons?:
+                | T
+                | {
+                    text?: T;
+                    url?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        cta?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              buttons?:
+                | T
+                | {
+                    text?: T;
+                    url?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              style?: T;
+              textAlign?: T;
+              backgroundImage?: T;
+              id?: T;
+              blockName?: T;
+            };
+        gallery?:
+          | T
+          | {
+              heading?: T;
+              images?:
+                | T
+                | {
+                    image?: T;
+                    caption?: T;
+                    id?: T;
+                  };
+              columns?: T;
+              aspectRatio?: T;
+              enableLightbox?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
+  type?: T;
+  workflowStatus?: T;
+  publishedAt?: T;
+  readingTimeMinutes?: T;
+  author?: T;
+  categories?: T;
+  relatedServices?: T;
+  relatedCaseStudies?: T;
+  relatedPosts?: T;
+  featuredImage?: T;
+  heroImage?: T;
+  imageCaption?: T;
+  slug?: T;
+  metaTitle?: T;
+  metaDescription?: T;
+  ogImage?: T;
+  canonicalUrl?: T;
+  keywords?: T;
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "post-categories_select".
+ */
+export interface PostCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  type?: T;
+  description?: T;
+  featuredImage?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -574,14 +1684,37 @@ export interface PagesSelect<T extends boolean = true> {
  * via the `definition` "services_select".
  */
 export interface ServicesSelect<T extends boolean = true> {
-  slug?: T;
   name?: T;
   subtitle?: T;
-  displayOrder?: T;
+  icon?: T;
   cardImage?: T;
   description?: T;
+  gallery?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
   longDescription?: T;
+  faq?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  metaTitle?: T;
+  metaDescription?: T;
+  ogImage?: T;
+  keywords?: T;
+  slug?: T;
+  displayOrder?: T;
+  featured?: T;
   contactFormEnabled?: T;
+  published?: T;
+  relatedServices?: T;
+  caseStudies?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -592,7 +1725,13 @@ export interface ServicesSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  credit?: T;
+  focalX?: T;
+  focalY?: T;
+  title?: T;
+  description?: T;
   sourcePath?: T;
+  tags?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -602,8 +1741,6 @@ export interface MediaSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
-  focalX?: T;
-  focalY?: T;
   sizes?:
     | T
     | {
@@ -627,6 +1764,16 @@ export interface MediaSelect<T extends boolean = true> {
               filesize?: T;
               filename?: T;
             };
+        hero?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
         og?:
           | T
           | {
@@ -641,6 +1788,59 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "case-studies_select".
+ */
+export interface CaseStudiesSelect<T extends boolean = true> {
+  title?: T;
+  subtitle?: T;
+  featuredImage?: T;
+  summary?: T;
+  client?: T;
+  location?: T;
+  year?: T;
+  duration?: T;
+  service?: T;
+  projectType?: T;
+  challenge?: T;
+  solution?: T;
+  outcome?: T;
+  gallery?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  slug?: T;
+  metaTitle?: T;
+  metaDescription?: T;
+  ogImage?: T;
+  published?: T;
+  featured?: T;
+  testimonials?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  quote?: T;
+  authorName?: T;
+  authorRole?: T;
+  authorCompany?: T;
+  authorImage?: T;
+  rating?: T;
+  service?: T;
+  project?: T;
+  published?: T;
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "contact-submissions_select".
  */
 export interface ContactSubmissionsSelect<T extends boolean = true> {
@@ -648,9 +1848,29 @@ export interface ContactSubmissionsSelect<T extends boolean = true> {
   name?: T;
   email?: T;
   phone?: T;
+  company?: T;
   message?: T;
   source?: T;
   submittedAt?: T;
+  ipAddress?: T;
+  status?: T;
+  priority?: T;
+  assignedTo?: T;
+  tags?: T;
+  internalNotes?:
+    | T
+    | {
+        note?: T;
+        author?: T;
+        createdAt?: T;
+        id?: T;
+      };
+  repliedAt?: T;
+  replyMethod?: T;
+  followUpDate?: T;
+  outcome?: T;
+  projectValue?: T;
+  convertedToProject?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -695,33 +1915,173 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Single instance. Header logo, contact info, social links, footer text.
+ * Global site configuration including branding, contact info, and SEO defaults.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings".
  */
 export interface SiteSetting {
   id: number;
-  logo?: (number | null) | Media;
+  /**
+   * Official company name used throughout the site.
+   */
   companyName: string;
+  /**
+   * Company tagline or slogan displayed with the logo.
+   */
   companyTagline?: string | null;
-  address?: string | null;
-  registeredOffice?: string | null;
+  /**
+   * Primary logo (SVG or PNG with transparent background recommended). Optional because the cloned frontend can use its existing logo asset.
+   */
+  logo?: (number | null) | Media;
+  /**
+   * Logo variant for dark backgrounds (optional).
+   */
+  logoDark?: (number | null) | Media;
+  /**
+   * Browser tab icon (32x32px or 64x64px PNG/ICO).
+   */
+  favicon?: (number | null) | Media;
+  /**
+   * Primary contact email address.
+   */
+  email: string;
   phoneNumbers?:
     | {
+        /**
+         * Label, e.g. 'Main', 'Mobile', 'Fax'.
+         */
+        label?: string | null;
+        /**
+         * Phone number.
+         */
         value: string;
         id?: string | null;
       }[]
     | null;
-  email?: string | null;
-  registrationNumber?: string | null;
-  socialLinks?: {
-    instagram?: string | null;
-    twitter?: string | null;
-    linkedin?: string | null;
-    facebook?: string | null;
+  address?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    county?: string | null;
+    postcode?: string | null;
+    country?: string | null;
   };
+  /**
+   * Google Maps embed code for contact page (optional).
+   */
+  mapEmbedCode?: string | null;
+  openingHours?:
+    | {
+        /**
+         * Day of week, e.g. 'Monday', 'Tuesday-Friday'.
+         */
+        day: string;
+        /**
+         * Hours, e.g. '9:00 AM - 5:00 PM', 'Closed'.
+         */
+        hours: string;
+        id?: string | null;
+      }[]
+    | null;
+  socialLinks?: {
+    /**
+     * LinkedIn company page URL.
+     */
+    linkedin?: string | null;
+    /**
+     * Twitter/X profile URL.
+     */
+    twitter?: string | null;
+    /**
+     * Facebook page URL.
+     */
+    facebook?: string | null;
+    /**
+     * Instagram profile URL.
+     */
+    instagram?: string | null;
+    /**
+     * YouTube channel URL.
+     */
+    youtube?: string | null;
+  };
+  /**
+   * Default image used when sharing the site on social media (1200x630px).
+   */
+  socialShareImage?: (number | null) | Media;
+  /**
+   * Companies House registration number.
+   */
+  registrationNumber?: string | null;
+  /**
+   * Registered office address (if different from main address).
+   */
+  registeredOffice?: string | null;
+  /**
+   * VAT registration number (if applicable).
+   */
+  vatNumber?: string | null;
+  accreditations?:
+    | {
+        /**
+         * Accreditation name, e.g. 'RTPI Member'.
+         */
+        name: string;
+        /**
+         * Accreditation logo (optional).
+         */
+        logo?: (number | null) | Media;
+        /**
+         * Link to accreditation page (optional).
+         */
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Suffix appended to page titles, e.g. ' | South West Planning'.
+   */
+  defaultMetaTitleSuffix?: string | null;
+  /**
+   * Fallback meta description for pages without custom descriptions.
+   */
+  defaultMetaDescription?: string | null;
+  /**
+   * Google Analytics measurement ID (e.g. 'G-XXXXXXXXXX').
+   */
+  googleAnalyticsId?: string | null;
+  /**
+   * Google Search Console verification code.
+   */
+  googleSearchConsoleVerification?: string | null;
+  /**
+   * Custom robots.txt content.
+   */
+  robotsTxt?: string | null;
+  /**
+   * Copyright text displayed in the footer.
+   */
   footerText?: string | null;
+  footerLinks?:
+    | {
+        label: string;
+        url: string;
+        /**
+         * Open link in new tab.
+         */
+        external?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Show newsletter signup form in footer.
+   */
+  newsletterEnabled?: boolean | null;
+  /**
+   * Heading for newsletter signup (only if enabled).
+   */
+  newsletterHeading?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -730,28 +2090,74 @@ export interface SiteSetting {
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
-  logo?: T;
   companyName?: T;
   companyTagline?: T;
-  address?: T;
-  registeredOffice?: T;
+  logo?: T;
+  logoDark?: T;
+  favicon?: T;
+  email?: T;
   phoneNumbers?:
     | T
     | {
+        label?: T;
         value?: T;
         id?: T;
       };
-  email?: T;
-  registrationNumber?: T;
+  address?:
+    | T
+    | {
+        line1?: T;
+        line2?: T;
+        city?: T;
+        county?: T;
+        postcode?: T;
+        country?: T;
+      };
+  mapEmbedCode?: T;
+  openingHours?:
+    | T
+    | {
+        day?: T;
+        hours?: T;
+        id?: T;
+      };
   socialLinks?:
     | T
     | {
-        instagram?: T;
-        twitter?: T;
         linkedin?: T;
+        twitter?: T;
         facebook?: T;
+        instagram?: T;
+        youtube?: T;
       };
+  socialShareImage?: T;
+  registrationNumber?: T;
+  registeredOffice?: T;
+  vatNumber?: T;
+  accreditations?:
+    | T
+    | {
+        name?: T;
+        logo?: T;
+        url?: T;
+        id?: T;
+      };
+  defaultMetaTitleSuffix?: T;
+  defaultMetaDescription?: T;
+  googleAnalyticsId?: T;
+  googleSearchConsoleVerification?: T;
+  robotsTxt?: T;
   footerText?: T;
+  footerLinks?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        external?: T;
+        id?: T;
+      };
+  newsletterEnabled?: T;
+  newsletterHeading?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

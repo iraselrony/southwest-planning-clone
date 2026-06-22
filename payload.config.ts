@@ -11,6 +11,10 @@ import { Services } from "./src/collections/Services";
 import { SiteSettings } from "./src/globals/SiteSettings";
 import { ContactSubmissions } from "./src/collections/ContactSubmissions";
 import { Media } from "./src/collections/Media";
+import { CaseStudies } from "./src/collections/CaseStudies";
+import { Testimonials } from "./src/collections/Testimonials";
+import { Posts } from "./src/collections/Posts";
+import { PostCategories } from "./src/collections/PostCategories";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -21,15 +25,38 @@ export default buildConfig({
 		importMap: {
 			baseDir: path.resolve(dirname),
 		},
+		components: {
+			views: {
+				dashboard: {
+					Component: "/src/admin/Dashboard",
+					path: "/",
+					meta: {
+						title: "Dashboard — South West Planning Admin",
+					},
+				},
+			},
+		},
 		meta: {
 			titleSuffix: " — South West Planning Admin",
 			icons: [],
 		},
 	},
-	collections: [Users, Pages, Services, Media, ContactSubmissions],
+	collections: [
+		Users,
+		Pages,
+		Posts,
+		PostCategories,
+		Services,
+		Media,
+		CaseStudies,
+		Testimonials,
+		ContactSubmissions,
+	],
 	globals: [SiteSettings],
 	editor: lexicalEditor(),
-	secret: process.env.PAYLOAD_SECRET || "INSECURE-DEV-SECRET-DO-NOT-USE-IN-PRODUCTION",
+	secret:
+		process.env.PAYLOAD_SECRET ||
+		"INSECURE-DEV-SECRET-DO-NOT-USE-IN-PRODUCTION",
 	typescript: {
 		outputFile: path.resolve(dirname, "src/payload-types.ts"),
 	},

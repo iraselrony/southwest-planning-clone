@@ -12,23 +12,49 @@ import config from "../payload.config.ts";
 const SITE_SETTINGS = {
 	companyName: "South West Planning Consultancy",
 	companyTagline: "Planning Consultants Southwest",
-	address:
-		"The Generator Hub, The Gallery, Kings Wharf, The Quay, Exeter, Devon, EX2 4AN",
+	address: {
+		line1: "The Generator Hub, The Gallery",
+		line2: "Kings Wharf, The Quay",
+		city: "Exeter",
+		county: "Devon",
+		postcode: "EX2 4AN",
+		country: "United Kingdom",
+	},
 	phoneNumbers: [
-		{ value: "01392 984 206" },
-		{ value: "07779 285 376" },
-		{ value: "07525 059 569" },
+		{ label: "Main", value: "01392 984 206" },
+		{ label: "Mobile", value: "07779 285 376" },
+		{ label: "Mobile 2", value: "07525 059 569" },
 	],
 	email: "info@southwestplanningconsultancy.co.uk",
+	openingHours: [
+		{ day: "Monday - Friday", hours: "9:00 AM - 5:00 PM" },
+		{ day: "Saturday", hours: "By appointment" },
+		{ day: "Sunday", hours: "Closed" },
+	],
 	registrationNumber: "13398455",
 	socialLinks: {
 		instagram: "",
 		twitter: "",
 		linkedin: "",
 		facebook: "",
+		youtube: "",
 	},
+	defaultMetaTitleSuffix: " | South West Planning",
+	defaultMetaDescription:
+		"South West Planning Consultancy provides expert planning advice for residential, commercial, rural, renewables and specialist development projects across the South West.",
+	robotsTxt:
+		"User-agent: *\nAllow: /\n\nSitemap: https://southwestplanningconsultancy.co.uk/sitemap.xml",
 	footerText:
 		"© South West Planning Consultancy Ltd. Registered in England and Wales. Company number 13398455.",
+	footerLinks: [
+		{
+			label: "Privacy & Cookie Policy",
+			url: "/privacy-cookie-policy",
+			external: false,
+		},
+		{ label: "Contact", url: "/contact", external: false },
+	],
+	newsletterEnabled: false,
 };
 
 await payload.init({ config, disableOnInit: true });

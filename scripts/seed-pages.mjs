@@ -1,11 +1,8 @@
 #!/usr/bin/env node
 /**
- * Seed the `pages` collection from the static SEO map in
- * `app/_lib/seo.ts`. Idempotent: skips pages that already exist (matched
- * by slug).
- *
- * Uses top-level await so `payload run` keeps the event loop alive
- * until the work is done.
+ * Seed/update the `pages` collection from the static SEO map in
+ * `app/_lib/seo.ts`. Idempotent: creates missing pages and updates
+ * baseline admin/SEO fields for existing pages.
  *
  * Usage: npx payload run scripts/seed-pages.mjs
  */
@@ -20,39 +17,60 @@ const TITLES = {
 	"/privacy-cookie-policy": "Privacy & Cookie Policy",
 };
 
+function templateFor(slug) {
+	if (slug === "/") return "homepage";
+	if (slug === "/contact") return "contact";
+	if (slug.startsWith("/services/")) return "service";
+	return "default";
+}
+
+function titleFor(slug) {
+	return TITLES[slug] || slug.replace(/^\//, "").replace(/-/g, " ");
+}
+
 await payload.init({ config, disableOnInit: true });
 console.log("Seeding pages...");
 
 let created = 0;
-let skipped = 0;
+let updated = 0;
 for (const slug of KNOWN_PAGE_SLUGS) {
 	const seo = SEO[slug];
 	if (!seo) continue;
+
+	const data = {
+		slug,
+		title: titleFor(slug),
+		metaTitle: seo.title,
+		metaDescription: seo.description,
+		template: templateFor(slug),
+		showInNav: !slug.startsWith("/services/"),
+		published: true,
+		featured: slug === "/",
+	};
 
 	const existing = await payload.find({
 		collection: "pages",
 		where: { slug: { equals: slug } },
 		limit: 1,
 	});
+
 	if (existing.docs.length > 0) {
-		skipped++;
+		await payload.update({
+			collection: "pages",
+			id: existing.docs[0].id,
+			data,
+		});
+		updated++;
 		continue;
 	}
 
 	await payload.create({
 		collection: "pages",
-		data: {
-			slug,
-			title: TITLES[slug] || slug.replace(/^\//, "").replace(/-/g, " "),
-			metaTitle: seo.title,
-			metaDescription: seo.description,
-			showInNav: !slug.startsWith("/services/"),
-			body: [],
-		},
+		data: { ...data, blocks: [] },
 	});
 	created++;
 	console.log(`  + ${slug}`);
 }
 
-console.log(`\nDone. Created ${created}, skipped ${skipped} (already exist).`);
+console.log(`\nDone. Created ${created}, updated ${updated}.`);
 process.exit(0);

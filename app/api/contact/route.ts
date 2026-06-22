@@ -146,6 +146,7 @@ async function persistSubmission(
 		const subject = `Contact form: ${payload.name || "(no name)"} — ${payload.source || pageUrl}`;
 		const created = await payloadClient.create({
 			collection: "contact-submissions",
+			draft: false,
 			data: {
 				subject,
 				name: payload.name || "",
@@ -154,6 +155,7 @@ async function persistSubmission(
 				message: payload.message || "",
 				source: payload.source || pageUrl,
 				submittedAt: new Date().toISOString(),
+				status: "new",
 			},
 			// Don't run access checks for this internal write — the route is
 			// already gated on validation.

@@ -1,0 +1,365 @@
+:root {
+	--swa-ink: #17211d;
+	--swa-muted: #5d6b64;
+	--swa-line: #d8dfd9;
+	--swa-surface: #f7f8f5;
+	--swa-card: #fffffb;
+	--swa-green: #255f46;
+	--swa-blue: #315b73;
+	--swa-amber: #8a6425;
+}
+
+.swa-dashboard {
+	min-height: 100%;
+	padding: clamp(20px, 3vw, 44px);
+	background:
+		radial-gradient(
+			circle at top left,
+			rgba(37, 95, 70, 0.12),
+			transparent 34rem
+		),
+		linear-gradient(180deg, #fbfcf8 0%, #eff3ed 100%);
+	color: var(--swa-ink);
+}
+
+.swa-dashboard * {
+	box-sizing: border-box;
+}
+
+.swa-dashboard a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.swa-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 24px;
+	align-items: end;
+	padding: clamp(28px, 4vw, 52px);
+	border: 1px solid rgba(23, 33, 29, 0.1);
+	border-radius: 28px;
+	background: linear-gradient(
+		135deg,
+		rgba(255, 255, 251, 0.96),
+		rgba(237, 243, 235, 0.94)
+	);
+	box-shadow: 0 24px 70px rgba(23, 33, 29, 0.09);
+}
+
+.swa-kicker {
+	margin: 0 0 10px;
+	color: var(--swa-green);
+	font-size: 12px;
+	font-weight: 760;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.swa-hero h1 {
+	max-width: 780px;
+	margin: 0;
+	font-size: clamp(40px, 6vw, 76px);
+	font-weight: 760;
+	letter-spacing: -0.045em;
+	line-height: 0.96;
+	text-wrap: balance;
+}
+
+.swa-hero-copy {
+	max-width: 720px;
+	margin: 20px 0 0;
+	color: var(--swa-muted);
+	font-size: clamp(17px, 1.5vw, 20px);
+	line-height: 1.55;
+}
+
+.swa-hero-panel {
+	display: grid;
+	gap: 8px;
+	min-width: 220px;
+	padding: 14px;
+	border: 1px solid rgba(37, 95, 70, 0.18);
+	border-radius: 20px;
+	background: rgba(255, 255, 251, 0.72);
+}
+
+.swa-hero-panel span {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 14px;
+	border-radius: 14px;
+	background: #eef4ec;
+	color: #294136;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.swa-hero-panel span::after {
+	width: 8px;
+	height: 8px;
+	border-radius: 999px;
+	background: currentColor;
+	content: "";
+	opacity: 0.62;
+}
+
+.swa-count-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 16px;
+	margin-top: 18px;
+}
+
+.swa-stat,
+.swa-panel {
+	border: 1px solid rgba(23, 33, 29, 0.1);
+	background: rgba(255, 255, 251, 0.9);
+	box-shadow: 0 18px 54px rgba(23, 33, 29, 0.07);
+}
+
+.swa-stat {
+	display: grid;
+	gap: 8px;
+	min-height: 170px;
+	padding: 22px;
+	border-radius: 22px;
+	transition:
+		transform 180ms ease-out,
+		border-color 180ms ease-out,
+		background 180ms ease-out;
+}
+
+.swa-stat:hover,
+.swa-action-list a:hover,
+.swa-latest-list a:hover {
+	transform: translateY(-2px);
+	border-color: rgba(37, 95, 70, 0.35);
+	background: #fffffe;
+}
+
+.swa-stat span {
+	color: var(--swa-muted);
+	font-size: 13px;
+	font-weight: 720;
+	letter-spacing: 0.02em;
+}
+
+.swa-stat strong {
+	font-size: clamp(42px, 5vw, 64px);
+	font-weight: 780;
+	letter-spacing: -0.055em;
+	line-height: 0.9;
+}
+
+.swa-stat small {
+	align-self: end;
+	color: var(--swa-muted);
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.swa-stat-green strong {
+	color: var(--swa-green);
+}
+.swa-stat-blue strong {
+	color: var(--swa-blue);
+}
+.swa-stat-amber strong {
+	color: var(--swa-amber);
+}
+.swa-stat-ink strong {
+	color: var(--swa-ink);
+}
+
+.swa-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.55fr);
+	gap: 18px;
+	margin-top: 18px;
+}
+
+.swa-panel {
+	border-radius: 24px;
+	padding: 22px;
+}
+
+.swa-main-panel {
+	background:
+		linear-gradient(
+			135deg,
+			rgba(255, 255, 251, 0.96),
+			rgba(246, 249, 244, 0.96)
+		),
+		radial-gradient(
+			circle at top right,
+			rgba(49, 91, 115, 0.12),
+			transparent 22rem
+		);
+}
+
+.swa-panel-head {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: 18px;
+}
+
+.swa-panel-head.compact {
+	align-items: center;
+	margin-bottom: 14px;
+}
+
+.swa-panel h2 {
+	margin: 0;
+	font-size: clamp(22px, 2vw, 30px);
+	font-weight: 760;
+	letter-spacing: -0.035em;
+	line-height: 1.08;
+}
+
+.swa-panel-head > a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0 14px;
+	border: 1px solid rgba(37, 95, 70, 0.22);
+	border-radius: 999px;
+	background: #edf4ec;
+	color: var(--swa-green);
+	font-size: 13px;
+	font-weight: 760;
+}
+
+.swa-type-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.swa-type {
+	min-height: 140px;
+	padding: 18px;
+	border: 1px solid rgba(23, 33, 29, 0.1);
+	border-radius: 18px;
+	background: rgba(255, 255, 251, 0.72);
+}
+
+.swa-type span {
+	display: block;
+	margin-bottom: 10px;
+	font-size: 17px;
+	font-weight: 760;
+}
+
+.swa-type small {
+	color: var(--swa-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.swa-action-list,
+.swa-latest-list {
+	display: grid;
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.swa-action-list a,
+.swa-latest-list a {
+	display: grid;
+	gap: 5px;
+	padding: 14px;
+	border: 1px solid rgba(23, 33, 29, 0.09);
+	border-radius: 16px;
+	background: rgba(247, 248, 245, 0.72);
+	transition:
+		transform 180ms ease-out,
+		border-color 180ms ease-out,
+		background 180ms ease-out;
+}
+
+.swa-action-list strong,
+.swa-latest-list span {
+	font-size: 14px;
+	font-weight: 760;
+}
+
+.swa-action-list span,
+.swa-latest-list small,
+.swa-empty {
+	color: var(--swa-muted);
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.swa-three-col {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 18px;
+	margin-top: 18px;
+}
+
+.swa-list-panel {
+	min-height: 320px;
+}
+
+.swa-empty {
+	margin: 0;
+	padding: 18px;
+	border: 1px dashed rgba(23, 33, 29, 0.18);
+	border-radius: 16px;
+	background: rgba(247, 248, 245, 0.65);
+}
+
+@media (max-width: 1180px) {
+	.swa-count-grid,
+	.swa-three-col {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.swa-layout {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 760px) {
+	.swa-dashboard {
+		padding: 14px;
+	}
+
+	.swa-hero,
+	.swa-count-grid,
+	.swa-three-col,
+	.swa-type-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.swa-hero {
+		padding: 24px;
+		border-radius: 22px;
+	}
+
+	.swa-hero-panel {
+		min-width: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.swa-stat,
+	.swa-action-list a,
+	.swa-latest-list a {
+		transition: none;
+	}
+
+	.swa-stat:hover,
+	.swa-action-list a:hover,
+	.swa-latest-list a:hover {
+		transform: none;
+	}
+}
