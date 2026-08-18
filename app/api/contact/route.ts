@@ -1,7 +1,7 @@
 // Contact form endpoint. Accepts POST from the two Webflow-style forms
 // (one on /contact, one on each /services/* page) and:
 //   1. Validates and normalises the form fields
-//   2. Sends an email via the Resend API
+//   2. Sends an email via the global SMTP server (kriov)
 //   3. Persists the submission to Payload's contactSubmissions collection
 //
 // Field names accept both naming conventions used in the Webflow HTML:
@@ -9,16 +9,15 @@
 //   Service page forms:   First-name-2 / Last-name-2 / Email-2 / Phone-2 / Message-2
 //
 // Required env vars:
-//   RESEND_API_KEY        Resend API key. Required for email.
+//   SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS   Global SMTP (defaults to kriov)
 //   CONTACT_TO_EMAIL      Comma-separated destination address(es).
-//   CONTACT_FROM_EMAIL    From address on the email.
 //   PAYLOAD_SECRET        Required for the Payload Local API (used to insert).
 //   DATABASE_URL          Required for the Payload Local API.
 
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
 import { getPayload } from "payload";
 import config from "@payload-config";
+import { sendContactEmail } from "../../../lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,7 +43,6 @@ function parseEmailList(raw: string | undefined, fallback: string[]): string[] {
 const TO_EMAILS = parseEmailList(process.env.CONTACT_TO_EMAIL, [
 	"info@southwestplanningconsultancy.co.uk",
 ]);
-const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL ?? "onboarding@resend.dev";
 
 function readField(
 	record: Record<string, unknown>,
@@ -227,63 +225,31 @@ export async function POST(request: Request) {
 		messageLength: payload.message?.length ?? 0,
 	});
 
-	const apiKey = process.env.RESEND_API_KEY;
-	if (!apiKey) {
-		console.error(
-			"[contact] RESEND_API_KEY is not set — email not sent. Set it in Vercel env vars (or .env.local for dev).",
-		);
-		return NextResponse.json(
-			{
-				ok: false,
-				error:
-					"Email service is not configured. Please call the firm directly.",
-				receivedAt,
-			},
-			{ status: 503 },
-		);
-	}
-
-	const resend = new Resend(apiKey);
 	const { text, html } = buildEmailBody(payload, pageUrl);
-
 	const subject = `New contact form submission from ${payload.name}`;
 
 	let emailOk = false;
 	let emailId: string | undefined;
-	try {
-		console.log("[contact] sending", {
-			from: FROM_EMAIL,
-			to: TO_EMAILS,
-			subject,
-		});
 
-		const { data, error } = await resend.emails.send({
-			from: FROM_EMAIL,
-			to: TO_EMAILS,
-			replyTo: payload.email,
-			subject,
-			text,
-			html,
-		});
+	const result = await sendContactEmail({
+		to: TO_EMAILS,
+		replyTo: payload.email,
+		subject,
+		text,
+		html,
+	});
 
-		if (error) {
-			console.error("[contact] Resend error", error);
-			return NextResponse.json(
-				{ ok: false, error: "Failed to send email", receivedAt },
-				{ status: 502 },
-			);
-		}
-
-		console.log("[contact] email sent", { id: data?.id, to: TO_EMAILS });
-		emailOk = true;
-		emailId = data?.id;
-	} catch (e) {
-		console.error("[contact] Resend exception", e);
+	if (!result.ok) {
+		console.error("[contact] SMTP send failed", result.error);
 		return NextResponse.json(
-			{ ok: false, error: "Email service threw an exception", receivedAt },
-			{ status: 500 },
+			{ ok: false, error: "Failed to send email", receivedAt },
+			{ status: 502 },
 		);
 	}
+
+	console.log("[contact] email sent", { messageId: result.messageId, to: TO_EMAILS });
+	emailOk = true;
+	emailId = result.messageId;
 
 	// Persist to Payload after the email send succeeds. If the email failed
 	// we return early above, so reaching this point means emailOk === true.
