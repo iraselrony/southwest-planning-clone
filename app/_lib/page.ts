@@ -304,7 +304,7 @@ export function extractBodyInner(
 		: isServicePage
 			? `service-page:${pageUrl.replace(/^\/services\//, "")}`
 			: `other:${pageUrl}`;
-	$body.find("form.form, form.w-form").each((_, el) => {
+	$body.find("form").each((_, el) => {
 		$(el).attr("data-contact-form", sourceTag);
 	});
 

@@ -113,7 +113,12 @@ export default async function Page() {
   }
   const clean = DOMPurify.sanitize(body, {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ['target', 'rel', 'loading'],
+    ADD_ATTR: ['target', 'rel', 'loading', 'name'],
+    // Content is our own static Webflow mirror (not user input), and
+    // DOMPurify's DOM-clobbering guard strips name="name" (the form's
+    // single name field) because 'name' is a property of HTMLFormElement.
+    // Disable it so the contact form's name input keeps its name attr.
+    SANITIZE_DOM: false,
   });
   return <div dangerouslySetInnerHTML={{ __html: clean }} />;
 }
@@ -162,7 +167,12 @@ export default async function HomePage() {
   }
   const clean = DOMPurify.sanitize(body, {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ['target', 'rel', 'loading'],
+    ADD_ATTR: ['target', 'rel', 'loading', 'name'],
+    // Content is our own static Webflow mirror (not user input), and
+    // DOMPurify's DOM-clobbering guard strips name="name" (the form's
+    // single name field) because 'name' is a property of HTMLFormElement.
+    // Disable it so the contact form's name input keeps its name attr.
+    SANITIZE_DOM: false,
   });
   return <div dangerouslySetInnerHTML={{ __html: clean }} />;
 }
