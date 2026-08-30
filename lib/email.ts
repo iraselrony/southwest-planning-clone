@@ -2,12 +2,12 @@
 //
 // Reads SMTP config from env vars (set in Vercel project settings),
 // defaulting to the kriov global SMTP server:
-//   SMTP_HOST = mail.kriov.com
+//   SMTP_HOST = mail.kriov.tech
 //   SMTP_PORT = 465
 //   SMTP_SECURE = true   (SMTPS over TLS on 465)
-//   SMTP_USER = noreply@kriov.com
+//   SMTP_USER = noreply@kriov.tech
 //   SMTP_PASS = <password>
-//   SMTP_FROM = noreply@kriov.com   From address
+//   SMTP_FROM = noreply@kriov.tech   From address
 //   CONTACT_TO_EMAIL = comma-separated recipient(s)  (fallback in caller)
 
 import nodemailer from "nodemailer";
@@ -29,7 +29,7 @@ export type SendResult = {
 };
 
 const smtpConfig = {
-	host: process.env.SMTP_HOST ?? "mail.kriov.com",
+	host: process.env.SMTP_HOST ?? "mail.kriov.tech",
 	port: Number(process.env.SMTP_PORT ?? "465"),
 	secure: process.env.SMTP_SECURE !== "false", // SMTPS on 465 by default
 	auth:
@@ -41,7 +41,7 @@ const smtpConfig = {
 			: undefined,
 };
 
-const DEFAULT_FROM = process.env.SMTP_FROM ?? "noreply@kriov.com";
+const DEFAULT_FROM = process.env.SMTP_FROM ?? "noreply@kriov.tech";
 
 let cachedTransport: Transporter | null = null;
 
